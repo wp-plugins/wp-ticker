@@ -1,0 +1,8 @@
+.ticker_content {
+  height: 150px;
+  width:200px;
+  border:solid 1px #0070C0;
+  background:#EFEFEF;
+  padding:5px;
+  overflow:hidden;
+}

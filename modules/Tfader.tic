@@ -1,0 +1,13 @@
+;******************************
+;* (c) 2010, Stephan Gärtner  *
+;* Using permission just for  *
+;* SteGaSoft WordPress Plugin *
+;* Ticker                     *
+;*                            *
+;* TSCRIPTNAME: Fader         *
+;******************************
+
+[INFO]
+name = Fader
+hint = "Hint: In- Out-Fading content" 
+code = "function jTickerFading(id){$('#ticker_content_'+id+' div:first').fadeOut(out_time[id],function(){$(this).remove().appendTo('#ticker_content_'+id);$('#ticker_content_'+id+' div:first').fadeIn(in_time[id]);});}function jTickerStartFader(id){fade_timer[id]=window.setInterval('jTickerFading('+id+')',show_time[id]);}function jTickerEndFader(id){window.clearInterval(fade_timer[id]);}"
