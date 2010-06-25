@@ -3,14 +3,14 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
 Description: News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de
-Version: 0.1
+Version: 0.11
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 */
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "0.1";
+$wpticversion = "0.11";
 
 
 //============= INCLUDES ==========================================================
@@ -71,7 +71,7 @@ register_activation_hook(__FILE__, 'wptic_install');
 function wptic_install() {
   global $wpdb;
 
-  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker (ID bigint(20) unsigned NOT NULL auto_increment, Optionen longtext NOT NULL, Daten varchar(100) NOT NULL, Typ varchar(100) NOT NULL, Template text NOT NULL, Memo text NOT NULL, PRIMARY KEY  (ID))";
+  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker (ID bigint(20) unsigned NOT NULL auto_increment, Optionen longtext NOT NULL, Daten text NOT NULL, Typ varchar(100) NOT NULL, Template text NOT NULL, Memo text NOT NULL, PRIMARY KEY  (ID))";
 
   // nur erstellen, wenn Tabelle noch nicht existiert
   include_once (ABSPATH."/wp-admin/upgrade-functions.php");
@@ -522,7 +522,7 @@ function wptic_options_page() {
   }
 
   function ticker_code(id) {
-    alert("<?php echo $code_info_w; ?>Post: [wpticker id="+id+"]\nTemplate: <"+"?php wptickerShow("+id+") ?>");
+    alert("<?php echo $code_info_w; ?>Post: [wpticker id="+id+"]\nTemplate: <"+"?php show_wpticker("+id+") ?>");
   }
 
 

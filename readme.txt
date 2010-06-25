@@ -4,7 +4,7 @@ Donate link: http://www.stegasoft.de
 Tags: news,ticker,newsticker,textticker,text,fader,scroller,rss,atom
 Requires at least: 2.6
 Tested up to: 3.0
-Stable tag: 0.1
+Stable tag: 0.11
 
 
 == Description ==
@@ -20,15 +20,15 @@ www.stegasoft.de veroeffentlicht.
 Im Gegensatz zu Ticker koennen leider keine Klicks mehr bei eigenem Text gezaehlt werden.
 Auch die Kalender-Funktion bei eigenen Texten ist (noch) nicht vorhanden.
 
-Die Datenbankabfragen wurden komplett ueberarbeitet. Somit sollte die Kompatibilitaet zu 
-zukuenftigen WordPress-Versionen gewaehrleistet sein. 
+Die Datenbankabfragen wurden komplett ueberarbeitet. Somit sollte die Kompatibilitaet zu
+zukuenftigen WordPress-Versionen gewaehrleistet sein.
 
 Mit WP-Ticker koennen nun auch (die meisten) ATOM-Feeds geparst werden.
 
 
 == Copyright ==
 Wordpress - Plugin "Wp-Ticker"
-Ver. 0.1 (06/2010)
+Ver. 0.11 (06/2010)
 (c) 2010 by SteGaSoft, Stephan Gaertner
 Www: http://www.stegasoft.de
 eMail: s. website
@@ -36,8 +36,14 @@ eMail: s. website
 
 
 == Historie ==
+Version 0.11 (25.06.2010)
+ - zwei kleine Fehler behoben:
+   - Datenbankfeldgroesse erweitert
+   - Code: Funktionsaufruf-Hinweistext korrigiert
+
+
 Version 0.1
-  Erste Version fuer Wordpress bis V3.0
+ - Erste Version fuer Wordpress bis V3.0
 
 
 
