@@ -3,14 +3,14 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
 Description: News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de
-Version: 0.11
+Version: 0.12
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 */
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "0.11";
+$wpticversion = "0.12";
 
 
 //============= INCLUDES ==========================================================
@@ -227,7 +227,8 @@ function wptic_options_page() {
 
     if($_POST['wptic_src']=="db") {
       $tic_cat = $_POST['wptic_cat'];
-      $data = implode(",",$tic_cat);
+      if(is_array($tic_cat))
+        $data = implode(",",$tic_cat);
     }
     else
       $data = $_POST['wptic_data'];

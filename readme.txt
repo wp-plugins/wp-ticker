@@ -4,7 +4,7 @@ Donate link: http://www.stegasoft.de
 Tags: news,ticker,newsticker,textticker,text,fader,scroller,rss,atom
 Requires at least: 2.6
 Tested up to: 3.0
-Stable tag: 0.11
+Stable tag: 0.12
 
 
 == Description ==
@@ -28,7 +28,6 @@ Mit WP-Ticker koennen nun auch (die meisten) ATOM-Feeds geparst werden.
 
 == Copyright ==
 Wordpress - Plugin "Wp-Ticker"
-Ver. 0.11 (06/2010)
 (c) 2010 by SteGaSoft, Stephan Gaertner
 Www: http://www.stegasoft.de
 eMail: s. website
@@ -36,6 +35,11 @@ eMail: s. website
 
 
 == Historie ==
+Version 0.12 (04.07.2010)
+ - kleiner Bugfix bei Arrayverarbeitung falls keine
+   Kategorien selektiert wurden
+   
+
 Version 0.11 (25.06.2010)
  - zwei kleine Fehler behoben:
    - Datenbankfeldgroesse erweitert
