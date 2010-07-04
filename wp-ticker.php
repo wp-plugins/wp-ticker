@@ -765,7 +765,7 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
         $template_stack = str_replace("%tic_title%",'<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">' . $post_title . '</a>',$template);
         $template_stack = str_replace("%tic_content%",$post_content,$template_stack);
 
-        $output .= $anfang.$template_stack.'</div';
+        $output .= $anfang.$template_stack.'</div>';
         $template_stack = "";
         $k++;
       }
