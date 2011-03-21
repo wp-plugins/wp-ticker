@@ -3,14 +3,14 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
 Description: News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de
-Version: 0.12
+Version: 0.13
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 */
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "0.12";
+$wpticversion = "0.13";
 
 
 //============= INCLUDES ==========================================================
@@ -49,7 +49,7 @@ function wpticjs2head() {
 
   $jscript_includes = "\n\n<!-- ***** WP-Ticker ***** -->\n";
   $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/style.css' type='text/css' />\n";
-  $jscript_includes .= "<script src=\"$wptic_plugin_dir/js/jquery.js\" type=\"text/javascript\"></script>\n";
+  //$jscript_includes .= "<script src=\"$wptic_plugin_dir/js/jquery.js\" type=\"text/javascript\"></script>\n";
   $jscript_includes .= "<script src=\"$wptic_plugin_dir/js/modules.php\" type=\"text/javascript\"></script>\n";
   $jscript_includes .= "<!-- ********************* -->\n\n";
 
@@ -57,6 +57,11 @@ function wpticjs2head() {
 }
 add_action('wp_head', 'wpticjs2head');
 
+
+function wptic_init() {
+  wp_enqueue_script( 'jquery' );
+}
+add_action('init', 'wptic_init');
 
 
 //============= Plugin - Button einbauen =====================================
@@ -765,7 +770,7 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
         $template_stack = str_replace("%tic_title%",'<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">' . $post_title . '</a>',$template);
         $template_stack = str_replace("%tic_content%",$post_content,$template_stack);
 
-        $output .= $anfang.$template_stack.'</div>';
+        $output .= $anfang.$template_stack.'</div';
         $template_stack = "";
         $k++;
       }

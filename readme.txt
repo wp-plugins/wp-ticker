@@ -3,8 +3,8 @@ Contributors: Stephan Gaertner
 Donate link: http://www.stegasoft.de
 Tags: news,ticker,newsticker,textticker,text,fader,scroller,rss,atom
 Requires at least: 2.6
-Tested up to: 3.0
-Stable tag: 0.12
+Tested up to: 3.1
+Stable tag: 0.13
 
 
 == Description ==
@@ -28,17 +28,21 @@ Mit WP-Ticker koennen nun auch (die meisten) ATOM-Feeds geparst werden.
 
 == Copyright ==
 Wordpress - Plugin "Wp-Ticker"
-(c) 2010 by SteGaSoft, Stephan Gaertner
+(c) 2010-2011 by SteGaSoft, Stephan Gaertner
 Www: http://www.stegasoft.de
 eMail: s. website
 
 
 
 == Historie ==
+Version 0.13 (21.03.2011)
+ - Umstellung auf jQuery von WordPress (keine separate Implementierung mehr)
+
+
 Version 0.12 (04.07.2010)
  - kleiner Bugfix bei Arrayverarbeitung falls keine
    Kategorien selektiert wurden
-   
+
 
 Version 0.11 (25.06.2010)
  - zwei kleine Fehler behoben:
@@ -47,7 +51,7 @@ Version 0.11 (25.06.2010)
 
 
 Version 0.1
- - Erste Version fuer Wordpress bis V3.0
+ - Erste Version fuer Wordpress bis V3.1
 
 
 
