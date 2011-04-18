@@ -4,7 +4,7 @@ Donate link: http://www.stegasoft.de
 Tags: news,ticker,newsticker,textticker,text,fader,scroller,rss,atom
 Requires at least: 2.6
 Tested up to: 3.1
-Stable tag: 0.13
+Stable tag: 0.131
 
 
 == Description ==
@@ -35,6 +35,10 @@ eMail: s. website
 
 
 == Historie ==
+Version 0.131 (05.04.2011)
+ - Kleiner Bugfix bei der Darstellung von Datenbank-Inhalten.
+
+
 Version 0.13 (21.03.2011)
  - Umstellung auf jQuery von WordPress (keine separate Implementierung mehr)
 
