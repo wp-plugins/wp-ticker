@@ -2,45 +2,56 @@
 /*
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
-Description: News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de
-Version: 0.131
+Description: (Live-) News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de. F&uuml;r WordPress ab Version 3.3
+Version: 1.0
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
+Min WP Version: 3.3
 */
+
+
+$akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "0.131";
+$wpticversion = "1.0";
+
 
 
 //============= INCLUDES ==========================================================
 @include_once (dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR. "wp-config.php");
 @include_once (dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR."wp-includes/wp-db.php");
-@include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."global.php");
-
-$version = get_bloginfo('version');
-
 
 define('WPTIC_URLPATH', WP_CONTENT_URL.'/plugins/'.plugin_basename( dirname(__FILE__)) );
 $wptic_plugin_dir = WPTIC_URLPATH;
+
+@include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."tic-global.php");
+
+$version = get_bloginfo('version');
 
 
 $wptic_options = get_option( "wptic_options" );
 
 
 //============= Code für Admin-Kopf erzeugen ============================
-/*
 function wpticjs2adminhead() {
-  global $wptic_plugin_dir,$wptic_options;
+  global $wptic_plugin_dir,$wptic_options,$version;
 
   $jscript_includes = "\n";
-  $jscript_includes .= "<style type='text/css'><!-- .fe_txt { border:solid 1px #5F5F5F; --></style>\n";
-  $jscript_includes .= "<script language='JavaScript' src=\"$qwq_plugin_dir/global/jscolor/jscolor.js\" type=\"text/javascript\"></script>\n\n";
+  $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/admin.css' type='text/css' />\n";
+
+  //$jscript_includes .= "<script src=\"".plugins_url()."/wp-ticker/js/fancybox/jquery.fancybox.js\" type=\"text/javascript\"></script>\n";
+  //$jscript_includes .= "<link rel='stylesheet' href= ".plugins_url()."/wp-ticker/js/fancybox/jquery.fancybox.css' />\n";
+
+  wp_register_script('fancy', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.js',array( 'jquery'),'1.3.4',true);
+  wp_enqueue_script('fancy', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.js',array( 'jquery'),'1.3.4',true);
+  wp_register_style('fancystyle', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.css');
+  wp_enqueue_style('fancystyle');
+
 
   echo $jscript_includes;
 }
 add_action('admin_head', 'wpticjs2adminhead');
-*/
 
 
 //============= Code für Template-Kopf erzeugen ============================
@@ -49,8 +60,7 @@ function wpticjs2head() {
 
   $jscript_includes = "\n\n<!-- ***** WP-Ticker ***** -->\n";
   $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/style.css' type='text/css' />\n";
-  //$jscript_includes .= "<script src=\"$wptic_plugin_dir/js/jquery.js\" type=\"text/javascript\"></script>\n";
-  $jscript_includes .= "<script src=\"$wptic_plugin_dir/js/modules.php\" type=\"text/javascript\"></script>\n";
+  $jscript_includes .= "<script src=\"$wptic_plugin_dir/js/tic-modules.php\" type=\"text/javascript\"></script>\n";
   $jscript_includes .= "<!-- ********************* -->\n\n";
 
   echo $jscript_includes;
@@ -60,6 +70,7 @@ add_action('wp_head', 'wpticjs2head');
 
 function wptic_init() {
   wp_enqueue_script( 'jquery' );
+
 }
 add_action('init', 'wptic_init');
 
@@ -76,11 +87,13 @@ register_activation_hook(__FILE__, 'wptic_install');
 function wptic_install() {
   global $wpdb;
 
-  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker (ID bigint(20) unsigned NOT NULL auto_increment, Optionen longtext NOT NULL, Daten text NOT NULL, Typ varchar(100) NOT NULL, Template text NOT NULL, Memo text NOT NULL, PRIMARY KEY  (ID))";
-
+  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker (ID bigint(20) unsigned NOT NULL auto_increment, Optionen longtext NOT NULL, Daten text NOT NULL, Typ varchar(100) NOT NULL, Template text NOT NULL, Memo text NOT NULL, PRIMARY KEY (ID))";
   // nur erstellen, wenn Tabelle noch nicht existiert
   include_once (ABSPATH."/wp-admin/upgrade-functions.php");
   @maybe_create_table($wpdb->prefix . "wp_ticker", $install_query);
+
+  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker_content (ID bigint(20) unsigned NOT NULL auto_increment, Ticker_ID INT NOT NULL, Daten text NOT NULL, Zeige_Start DATE NOT NULL, Zeige_Ende DATE NOT NULL, Auto_Delete varchar(2) NOT NULL, PRIMARY KEY (ID), INDEX ( Ticker_ID ))";
+  @maybe_create_table($wpdb->prefix . "wp_ticker_content", $install_query);
 
 }
 
@@ -93,13 +106,36 @@ function wptic_deinstall() {
   global $wpdb,$wptic_options;
   delete_option('wptic_options');
   $wpdb->query("DROP TABLE " . $wpdb->prefix ."wp_ticker");
+  $wpdb->query("DROP TABLE " . $wpdb->prefix ."wp_ticker_content");
   $wpdb->query("OPTIMIZE TABLE $wpdb->options");
 }
+
+//===== bei Deaktivierung von WP-Ticker Cronjob entfernen =====
+register_deactivation_hook(__FILE__, 'wptic_end_autodelete');
+function wptic_end_autodelete() {
+  wp_clear_scheduled_hook('wptic_autodelete_hook');
+}
+
+
+//===== auto. Löschen von eigenem Text mit WP-Cron =====
+if ( !wp_next_scheduled('wptic_autodelete_hook') ) {
+  wp_schedule_event( mktime(1,0,0,date("n",time()),date("j",time()),date("Y",time())), 'hourly', 'wptic_autodelete_hook' ); // hourly, daily and twicedaily
+}
+
+//===== auto. Löschen von eigenem Text =====
+function wptic_autodelete_own() {
+  global $wpdb;
+  $heute = date("Y-m-d",time());
+  $befehl = "DELETE FROM ".$wpdb->prefix ."wp_ticker_content WHERE Auto_Delete='j' AND Zeige_Ende<'$heute'";
+  $result = $wpdb->get_results($befehl);
+}
+add_action('wptic_autodelete_hook', 'wptic_autodelete_own');
+
 
 
 //============ Funktion für Template =======================================
 function show_wpticker($id) {
-  global $wpdb,$wptic_options,$wptic_plugin_dir,$tcpr;
+  global $wpdb,$wptic_options,$wptic_plugin_dir,$aus,$loader;
 
   //Daten zu Ticker-ID auslesen
   $befehl = "SELECT Optionen,Daten,Template,Typ FROM ".$wpdb->prefix ."wp_ticker WHERE ID=$id";
@@ -112,37 +148,39 @@ function show_wpticker($id) {
     $template = $ticdat->Template;
   }
 
-  /*
-  $param_array = Array("id"=>$id,
-                       "src"=>$optionen['src'],
-                       "showtime"=>$optionen['showtime'],
-                       "intime"=>$optionen['intime'],
-                       "outtime"=>$optionen['outtime'],
-                       "data"=>$daten,
-                       "type"=>$type,
-                       "items"=>$optionen['itemcount'],
-                       "chars"=>$optionen['charcount']);
-  */
+  if($optionen["reloadInterval"]=="")
+    $interval_faktor = 0;
+  else
+    $interval_faktor = $optionen["reloadInterval"];
+  if($optionen["reloaderPause"]=="")
+    $pause_faktor = 0;
+  else
+    $pause_faktor = $optionen["reloaderPause"];
+
+  $interval_time = $interval_faktor * 60000;
+  $pause_time = $pause_faktor * 1000;
+
+
+  if(!is_numeric($pause_time) || $pause_time<=0)
+   $loader = "";
+
   $template = stripslashes($template);
 
-  $code = '<!-- WP-Ticker-Content Begin -->'."\n".'<div class="ticker_content" id="ticker_content_'.$id.'" onmouseover="jTickerEnd'.$type.'('.$id.')" onmouseout="jTickerStart'.$type.'('.$id.')">'."\n";
+  $code = '<!-- WP-Ticker-Content Begin -->'."\n".
+          '<div id="wptic_code_'.$id.'"></div>'."\n".
+          '<script type="text/javascript">'."\n".
+          'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
+  if(is_numeric($interval_time) && $interval_time>0) {
+    $code .= 'setInterval ( function () {'.
+          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>'.decode_tcpr_wp($aus).'\');';
+    if(is_numeric($pause_time) && $pause_time>0)
+       $code .= 'setTimeout(\'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});\','.$pause_time.');';
+    else
+       $code .= 'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
 
-  if($optionen['src']=="db")
-    $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
-  else if($optionen['src']=="own")
-    $code .= wptic_get_owndata($daten);
-  else if($optionen['src']=="rss")
-    $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
-
-
-  $code .= '</div>'."\n".base64_decode($tcpr).
-           '<script type="text/javascript">'.
-           'show_time['.$id.'] = '.$optionen['showtime'].';'.
-           'out_time['.$id.'] = '.$optionen['outtime'].';'.
-           'in_time['.$id.'] = '.$optionen['intime'].';'.
-           'fade_timer['.$id.'];'.
-           'jTickerStart'.$type.'('.$id.');'.
-           '</script>'."\n<!-- WP-Ticker-Content END -->\n";
+    $code .= '},'.$interval_time.');';
+  }
+  $code .= '</script>'."\n<!-- WP-Ticker-Content END -->\n";
 
 
   echo $code;
@@ -151,7 +189,7 @@ function show_wpticker($id) {
 //============ Platzhalter ersetzen =========================================
 //------------ [wpticker] ----------------------------------------------
 function wptic_get_params($atts) {
-  global $wpdb,$wptic_options,$wptic_plugin_dir,$tcpr;
+  global $wpdb,$wptic_options,$wptic_plugin_dir,$aus,$loader;
 
   extract(shortcode_atts(array('id'=>1), $atts));
 
@@ -166,39 +204,58 @@ function wptic_get_params($atts) {
     $template = $ticdat->Template;
   }
 
+  if($optionen["reloadInterval"]=="")
+    $interval_faktor = 0;
+  else
+    $interval_faktor = $optionen["reloadInterval"];
+  if($optionen["reloaderPause"]=="")
+    $pause_faktor = 0;
+  else
+    $pause_faktor = $optionen["reloaderPause"];
+
+  $interval_time = $interval_faktor * 60000;
+  $pause_time = $pause_faktor * 1000;
+
+  if(!is_numeric($pause_time) || $pause_time<=0)
+    $loader = "";
+
+
   $template = stripslashes($template);
 
-  $code = '<!-- WP-Ticker-Content Begin -->'."\n".'<div class="ticker_content" id="ticker_content_'.$id.'" onmouseover="jTickerEnd'.$type.'('.$id.')" onmouseout="jTickerStart'.$type.'('.$id.')">'."\n";
+  $code = '<!-- WP-Ticker-Content Begin -->'."\n".
+          '<div id="wptic_code_'.$id.'"></div>'."\n".
+          '<script type="text/javascript">'."\n".
+          'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
+  if(is_numeric($interval_time) && $interval_time>0) {
+    $code .= 'setInterval ( function () {'.
+          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>'.decode_tcpr_wp($aus).'\');';
+    if(is_numeric($pause_time) && $pause_time>0)
+       $code .= 'setTimeout(\'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});\','.$pause_time.');';
+    else
+       $code .= 'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
 
-
-  if($optionen['src']=="db")
-    $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
-  else if($optionen['src']=="own")
-    $code .= wptic_get_owndata($daten);
-  else if($optionen['src']=="rss") {
-    $code .= "<!-- RSS Feed Script von Sebastian Gollus: http://www.web-spirit.de/webdesign-tutorial/7/RSS-Feed-auslesen-mit-PHP -->\n";
-    $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
+    $code .= '},'.$interval_time.');';
   }
-
-  $code .= '</div>'."\n".base64_decode($tcpr)."\n".
-           '<script type="text/javascript">'."\n".
-           'show_time['.$id.'] = '.$optionen['showtime'].';'."\n".
-           'out_time['.$id.'] = '.$optionen['outtime'].';'."\n".
-           'in_time['.$id.'] = '.$optionen['intime'].';'."\n".
-           'fade_timer['.$id.'];'."\n".
-           'jTickerStart'.$type.'('.$id.');'."\n".
-           '</script>'."\n<!-- WP-Ticker-Content END -->\n";
-
+  $code .= '</script>'."\n<!-- WP-Ticker-Content END -->\n";
 
   return $code;
 }
 add_shortcode('wpticker', 'wptic_get_params');
 
 
+function decode_tcpr_wp($do=flase) {
+  if($do)
+    $out = "";
+  else
+    $out = base64_decode("PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo4cHQ7Ij5XUC1UaWNrZXIgcG93ZXJlZCBieSA8YSBocmVmPSJodHRwOi8vd3d3LnN0ZWdhc29mdC5kZSIgdGFyZ2V0PSJfYmxhbmsiPlN0ZUdhU29mdDwvYT48L3NwYW4+");
+  return $out;
+}
+
+
 
 //============= Seite für Plugin-Administration aufbauen ====================
 function wptic_options_page() {
-  global $wpdb,$wptic_plugin_dir,$wpticversion;
+  global $wpdb,$wptic_plugin_dir,$wpticversion,$max_year,$aus,$wpticversion;
 
   if (defined('WPLANG')) {
     $lang = WPLANG;
@@ -252,7 +309,9 @@ function wptic_options_page() {
                       "outtime"=>$_POST['wptic_outtime'],
                       "src"=>$_POST['wptic_src'],
                       "itemcount"=>$_POST['wptic_itemcount'],
-                      "charcount"=>$_POST['wptic_charcount']);
+                      "charcount"=>$_POST['wptic_charcount'],
+                      "reloadInterval"=>$_POST['wptic_reloadtime'],
+                      "reloaderPause"=>$_POST['wptic_reloadpausetime']);
 
     //++++++ Ticker speichern/updaten/löschen +++++++
     if($_POST[ 'wptic_aktion' ]=="insert")
@@ -290,7 +349,7 @@ function wptic_options_page() {
   $dir = opendir($verzeichnis);
   $first_modul = "";
   while($datei = readdir($dir)) {
-    if (is_file($verzeichnis.$datei) && (substr($datei, -3, 3) == "tic")) {
+    if (is_file($verzeichnis.$datei) && (substr($datei, -3, 3) == "php")) {
       $ini_data = parse_ini_file($verzeichnis.$datei);
       $modules .= '<option value="'.$ini_data["name"].'">'.$ini_data["name"].'</option>';
       $js_script .= 'ticker_hints[0]["'.$ini_data["name"].'"] = "'.$ini_data["hint"].'";'."\n";
@@ -340,6 +399,8 @@ function wptic_options_page() {
                         '<input type="hidden" name="u_showtime_'.$ticdat->ID.'" value="'.$optionen['showtime'].'" />'.
                         '<input type="hidden" name="u_intime_'.$ticdat->ID.'" value="'.$optionen['intime'].'" />'.
                         '<input type="hidden" name="u_outtime_'.$ticdat->ID.'" value="'.$optionen['outtime'].'" />'.
+                        '<input type="hidden" name="u_reloadtime_'.$ticdat->ID.'" value="'.$optionen['reloadInterval'].'" />'.
+                        '<input type="hidden" name="u_reloadpausetime_'.$ticdat->ID.'" value="'.$optionen['reloaderPause'].'" />'.
                         '<input type="hidden" name="u_typ_'.$ticdat->ID.'" value="'.$ticdat->Typ.'" />'.
                         '<input type="hidden" name="u_itemcount_'.$ticdat->ID.'" value="'.$optionen['itemcount'].'" />'.
                         '<input type="hidden" name="u_charcount_'.$ticdat->ID.'" value="'.$optionen['charcount'].'" />'.
@@ -353,18 +414,23 @@ function wptic_options_page() {
 
 
   //+++++ AKTUELLE ID AUSLESEN +++++++++++++++++++++++++++++
-  $befehl = "SHOW TABLE STATUS FROM ".DB_NAME." LIKE '".$wpdb->prefix ."wp_ticker'";
+  $befehl = "SHOW TABLE STATUS LIKE '".$wpdb->prefix ."wp_ticker'";
   $tabledaten = $wpdb->get_results($befehl);
   foreach ($tabledaten as $tabledat) {
     $last_id = $tabledat->Auto_increment;
   }
-
+  if($last_id=="")
+    $last_id = 1;
 
   //============ Now display the options editing screen ===========================
   echo "<div class=\"wrap\">";
 
   // header
-  echo "<h2>" . __( "WP-Ticker $wpticversion Administration", "wptic_trans_domain" ) ."</h2>";
+  if($aus)
+    $off="aus";
+  else
+    $off="an";
+  echo "<h2>" . __( "WP-Ticker $wpticversion Administration", "wptic_trans_domain" ) ."<script type='text/javascript' src='http://www.stegasoft.de/php/wp-ticker-news.php?lang=$lang&amp;v=$wpticversion&amp;a=$off'></script></h2>";
 
   // options form
 
@@ -404,9 +470,16 @@ function wptic_options_page() {
      <?php echo $duration_w; ?><br />
      <?php echo $tickershowtime_w; ?>: <input type="text" name="wptic_showtime" value="3000" style="width:60px;" /><?php echo $tickershowtime_info_w; ?> &nbsp; &nbsp;
      <?php echo $tickerintime_w; ?>: <input type="text" name="wptic_intime" value="1000" style="width:60px;" /><?php echo $tickerintime_info_w; ?> &nbsp; &nbsp;
-     <?php echo $tickerouttime_w; ?>: <input type="text" name="wptic_outtime" value="1000" style="width:60px;" /><?php echo $tickerouttime_info_w; ?><br />&nbsp;
+     <?php echo $tickerouttime_w; ?>: <input type="text" name="wptic_outtime" value="1000" style="width:60px;" /><?php echo $tickerouttime_info_w; ?>
     </td>
    </tr>
+   <tr>
+    <td colspan="2">
+     <?php echo $tickerreloadtime_w; ?>: <input type="text" name="wptic_reloadtime" value="0" style="width:60px;" /><?php echo $tickerreloadtime_info_w; ?> &nbsp; &nbsp;
+     <?php echo $tickerreloadpausetime_w; ?>: <input type="text" name="wptic_reloadpausetime" value="0" style="width:60px;" /><?php echo $tickerreloadpausetime_info_w; ?><br />&nbsp;
+    </td>
+   </tr>
+
    <tr>
     <td><?php echo $tickertype_w; ?>:</td>
     <td>
@@ -441,9 +514,6 @@ function wptic_options_page() {
   <hr />
 
 
-
-
-
   <br />
   <?php echo $fußnote_w; ?>
 
@@ -474,13 +544,15 @@ function wptic_options_page() {
     if(document.forms["tictableform"].elements[u_src].value=="own") {
       document.form1.wptic_src.selectedIndex = 1;
       document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_own; ?>:';
-      document.getElementById('data_context').innerHTML = '<textarea name="wptic_data" style="width:400px;height:170px;"><\/textarea>';
-      var u_daten = base64_decode (document.forms["tictableform"].elements["u_data_"+id].value);
-      u_daten = str_replace("[brn]", "\r\n", u_daten);
-      u_daten = str_replace("[br]", "\r", u_daten);
-      u_daten = str_replace("[bn]", "\n", u_daten);
 
-      document.form1.wptic_data.value = u_daten;
+      document.getElementById('data_context').innerHTML = '<div id="wptic_data" class="wptic_data_basic"><\/div>'+
+                                                          '<div id="wptic_datamenu" class="wptic_data_basic">'+
+                                                           '<input type="button" value="<?php echo $own_ticker_neu_w; ?>" onclick="insert_own_tictext('+id+')" style="margin:4px 4px 4px 4px;" />'+
+                                                          '<\/div>';
+      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: id}, function(data) {
+        jQuery('#wptic_data').html(data);
+      });
+
     }
 
 
@@ -493,12 +565,14 @@ function wptic_options_page() {
       u_daten = str_replace("[br]", "\r", u_daten);
       u_daten = str_replace("[bn]", "\n", u_daten);
       document.form1.wptic_data.value = u_daten;
-      //document.form1.wptic_data.value = document.forms["tictableform"].elements["u_data_"+id].value;
+
     }
 
     document.form1.wptic_showtime.value = document.forms["tictableform"].elements["u_showtime_"+id].value;
     document.form1.wptic_intime.value = document.forms["tictableform"].elements["u_intime_"+id].value;
     document.form1.wptic_outtime.value = document.forms["tictableform"].elements["u_outtime_"+id].value;
+    document.form1.wptic_reloadtime.value = document.forms["tictableform"].elements["u_reloadtime_"+id].value;
+    document.form1.wptic_reloadpausetime.value = document.forms["tictableform"].elements["u_reloadpausetime_"+id].value;
     document.form1.wptic_itemcount.value = document.forms["tictableform"].elements["u_itemcount_"+id].value;
     document.form1.wptic_charcount.value = document.forms["tictableform"].elements["u_charcount_"+id].value;
     document.form1.wptic_template.value = document.forms["tictableform"].elements["u_template_"+id].value;
@@ -513,7 +587,6 @@ function wptic_options_page() {
       }
     }
 
-    //document.form1.wptic_id.style.visibility = "hidden";
     document.form1.wptic_id.disabled = false;
   }
 
@@ -538,7 +611,14 @@ function wptic_options_page() {
                     document.getElementById('data_context').innerHTML ='<?php echo $cat_items; ?>';
                     break;
          case "own": document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_own; ?>:';
-                     document.getElementById('data_context').innerHTML = '<textarea name="wptic_data" style="width:400px;height:170px;"><\/textarea>';
+                     document.getElementById('data_context').innerHTML = '<div id="wptic_data" class="wptic_data_basic"><\/div>'+
+                                                                         '<div id="wptic_datamenu" class="wptic_data_basic">'+
+                                                                          '<input type="button" value="<?php echo $own_ticker_neu_w; ?>" onclick="insert_own_tictext(<?php echo $last_id; ?>)" style="margin:4px 4px 4px 4px;" />'+
+                                                                         '<\/div>';
+
+                     jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: <?php echo $last_id; ?>}, function(data) {
+                       jQuery('#wptic_data').html(data);
+                     });
                      break;
          case "rss": document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_rss; ?>:';
                      document.getElementById('data_context').innerHTML = '<textarea name="wptic_data" style="width:400px;height:170px;"><\/textarea>';
@@ -554,7 +634,156 @@ function wptic_options_page() {
   }
 
 
-function base64_decode (data) {
+  //===== Funktionen für eigenen Tocler-Text =====
+  function insert_own_tictext(id) {
+
+    <?php
+      $tag = "<option value='00'>$tag_w</option>";
+      for ($i=1; $i<32;$i++) {
+        if($i<10)
+          $tagwert = "0".$i;
+        else
+          $tagwert = $i;
+        $tag .= "<option value='$tagwert'>$tagwert</option>";
+      }
+
+      $monat = "<option value='00'>$monat_w</option>";
+      for ($i=1; $i<13;$i++) {
+        if($i<10)
+          $monatwert = "0".$i;
+        else
+          $monatwert = $i;
+        $monat .= "<option value='$monatwert'>$monatwert</option>";
+      }
+
+
+      if( ($max_year < date("Y",time())) || (trim($max_year)=="") || (!is_numeric($max_year)))
+        $max_year = date("Y",time());
+
+      $jahr = "<option value='00'>$jahr_w</option>";
+      for ($i=date("Y",time()); $i<=$max_year;$i++) {
+        $jahr .= "<option value='$i'>$i</option>";
+      }
+    ?>
+
+    var fancy_code = "<b><?php echo $own_ticker_texthinweis; ?>:<\/b><br />"+
+                     "<textarea id='tickertext' style='width:390px; height:200px;'><\/textarea><br />"+
+                     "<table border='0' class='widefat' style='width:390px;'>"+
+                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_startdata_w; ?>:<\/b><\/td><td><select id='startdate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='startdate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='startdate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select><\/td><\/tr>"+
+                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_enddata_w; ?>:<\/b><\/td><td><select id='enddate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='enddate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='enddate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select><\/td><\/tr>"+
+                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_autodel_w; ?>:<\/b><\/td><td><input type='checkbox' id='autodelete' value='j' /><\/td><\/tr>"+
+                     "<\/table>"+
+                     "<input type='button' value='<?php echo $speichern_w; ?>' onclick='insert_now("+id+")' style='margin-right:10px;' />"+
+                     "<input type='button' value='<?php echo $abbruch_w; ?>' onclick='close_fancy()' />";
+
+
+    jQuery.fancybox(
+                fancy_code,
+                {
+                        'autoDimensions'        : false,
+                        'width'                         : 400,
+                        'height'                        : 'auto',
+                        'transitionIn'                : 'none',
+                        'transitionOut'                : 'none',
+                }
+    );
+
+  }
+
+
+
+  function close_fancy() {
+     parent.jQuery.fancybox.close();
+  }
+
+
+  function insert_now(id) {
+
+    var input_data = new Array()
+        input_data[0] = jQuery("#tickertext").val();
+        input_data[1] = jQuery("#startdate_j").val() + "-" + jQuery("#startdate_m").val() + "-" + jQuery("#startdate_d").val();
+        input_data[2] = jQuery("#enddate_j").val() + "-" + jQuery("#enddate_m").val() + "-" + jQuery("#enddate_d").val();
+        if(jQuery("#autodelete").attr('checked'))
+          input_data[3] = "j";
+        else
+          input_data[3] = "n";
+
+     close_fancy();
+
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{
+                                                                                   ticker_id: id,
+                                                                                   aktion: "insert",
+                                                                                   content: input_data[0],
+                                                                                   startdate: input_data[1],
+                                                                                   enddate: input_data[2],
+                                                                                   autodelete: input_data[3]
+                                                                                  },
+                                                                                  function(data) {
+                                                                                    jQuery('#wptic_data').html(data);
+                                                                                  }
+    );
+
+  }
+
+
+  function edit_own_tictext(ed_id,tic_id) {
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "edit", aktion_id: ed_id}, function(data) {
+      jQuery.fancybox(
+                data,
+                {
+                        'autoDimensions'        : false,
+                        'width'                         : 400,
+                        'height'                        : 'auto',
+                        'transitionIn'                : 'none',
+                        'transitionOut'                : 'none',
+                }
+      );
+    });
+
+  }
+
+
+
+  function update_own_tictext(ed_id,tic_id) {
+    var input_data = new Array()
+        input_data[0] = jQuery("#tickertext").val();
+        input_data[1] = jQuery("#startdate_j").val() + "-" + jQuery("#startdate_m").val() + "-" + jQuery("#startdate_d").val();
+        input_data[2] = jQuery("#enddate_j").val() + "-" + jQuery("#enddate_m").val() + "-" + jQuery("#enddate_d").val();
+        if(jQuery("#autodelete").attr('checked'))
+          input_data[3] = "j";
+        else
+          input_data[3] = "n";
+
+    close_fancy();
+
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{
+                                                                                   ticker_id: tic_id,
+                                                                                   aktion: "update",
+                                                                                   content: input_data[0],
+                                                                                   startdate: input_data[1],
+                                                                                   enddate: input_data[2],
+                                                                                   autodelete: input_data[3],
+                                                                                   aktion_id: ed_id
+                                                                                  },
+                                                                                  function(data) {
+                                                                                    jQuery('#wptic_data').html(data);
+                                                                                  }
+    );
+  }
+
+
+
+  function delete_own_tictext(del_id,tic_id) {
+    if(confirm("<?php echo $own_ticker_delete_w; ?>"+del_id+"?")) {
+      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "delete", aktion_id: del_id}, function(data) {
+        jQuery('#wptic_data').html(data);
+      });
+    }
+  }
+
+
+
+  function base64_decode (data) {
     // Decodes string using MIME base64 algorithm
     //
     // version: 1004.2314
@@ -600,10 +829,10 @@ function base64_decode (data) {
     dec = tmp_arr.join('');
     dec = this.utf8_decode(dec);
     return dec;
-}
+  }
 
 
-function utf8_decode ( str_data ) {
+  function utf8_decode ( str_data ) {
     // Converts a UTF-8 encoded string to ISO-8859-1
     //
     // version: 1004.2314
@@ -635,7 +864,7 @@ function utf8_decode ( str_data ) {
         }
     }
     return tmp_arr.join('');
-}
+  }
 
   <?php echo $js_script; ?>
 
@@ -652,343 +881,8 @@ function utf8_decode ( str_data ) {
 }
 
 
-//===== DATEN AUS EIGENEM TEXT ================================
-function wptic_get_owndata($content) {
-  $content_array = explode(";;",$content);
-  $output = "";
-  $k=0;
-  foreach ($content_array as $content) {
-    if($k==0)
-      $anfang = '<div>';
-    else
-      $anfang = '<div style="display:none;">';
-    $output .= $anfang.$content.'</div>';
-    $k++;
-  }
-  return $output;
-}
-
-
-//===== DATEN AUS RSS_FEEDS ====================================
-function wptic_get_rssdata($no_posts, $urls, $maxchar,$template) {
-  global $more_tag;
-
-  $url_array = explode("\r\n",$urls);
-
-  $output = "";
-  $headline = "";
-  $item_head = "";
-
-  $k=0;
-  foreach($url_array as $url) {
-
-    $url_elem = explode(";",$url);
-
-    $data_array = wptic_getRssfeed($url_elem[0], $url_elem[1], $no_posts, 3);
-
-    $item_array = $data_array[2];
-
-    $link = trim($data_array[1]);
-    if($link=="")
-      $link = "#";
-
-    $headline = '<a href="'.$link.'" target="_blank"><b>'.$data_array[0].'</b></a><br />';
-
-    foreach($item_array as $items) {
-      if($k==0)
-        $anfang = '<div>';
-      else
-        $anfang = '<div style="display:none;">';
-
-      $link = trim($items[1]);
-      if($link=="")
-        $link = "#";
-      $item_head = '<a href="'.$link.'" target="_blank">'.$items[0].'</a>';
-
-      $content = wptic_shrink_data($items[2],$maxchar);
-
-      $template_stack = str_replace("%tic_title%",$headline.$item_head,$template);
-      if(trim($content)!="")
-        $template_stack = str_replace("%tic_content%",$content,$template_stack);
-      else
-        $template_stack = str_replace("%tic_content%","",$template_stack);
-
-      $template_stack = str_replace("<-ticend->",'<a href="'.$link.'" target="_blank">'.$more_tag.'</a>',$template_stack);
-
-      $template_stack = trim($template_stack);
-
-      $output .= $anfang.$template_stack.'</div>';
-      $k++;
-    }
-
-
-  }
-
-
-
-  return $output;
-}
-
-
-
-//===== DATEN AUS DB ============================================
-function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
-  global $wpdb,$more_tag;
-
-  if(trim($no_posts)!="")
-    $limit = " LIMIT $no_posts";
-  else
-    $limit = "";
-
-  $output = '';
-
-  $catid_arr = explode(",",$catids);
-
-  $k=0;
-  foreach($catid_arr as $catid) {
-
-    $request = "SELECT DISTINCT wposts.* FROM $wpdb->posts wposts LEFT JOIN $wpdb->postmeta wpostmeta ON wposts.ID = wpostmeta.post_id LEFT JOIN $wpdb->term_relationships ON (wposts.ID = $wpdb->term_relationships.object_id) LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) WHERE $wpdb->term_taxonomy.taxonomy = 'category' AND $wpdb->term_taxonomy.term_id ='$catid' AND wposts.post_status='publish' AND wposts.post_type='post' ORDER BY wposts.post_date DESC$limit";
-    $posts = $wpdb->get_results($request);
-
-    if($posts) {
-
-      foreach ($posts as $post) {
-        $post_title = stripslashes($post->post_title);
-        $permalink = get_permalink($post->ID);
-        $post_content = stripslashes($post->post_content);
-
-        if($maxchar!="")
-          $post_content = wptic_shrink_data($post_content,$maxchar);
-
-        $post_content = str_replace("<-ticend->", '<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">'.$more_tag.'</a>',$post_content);
-
-        if($k==0)
-          $anfang = '<div>';
-        else
-          $anfang = '<div style="display:none;">';
-
-        $template_stack = str_replace("%tic_title%",'<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">' . $post_title . '</a>',$template);
-        $template_stack = str_replace("%tic_content%",$post_content,$template_stack);
-
-        $output .= $anfang.$template_stack.'</div>';
-        $template_stack = "";
-        $k++;
-      }
-    }
-    else {
-      if($k==0)
-        $anfang = '<div>';
-      else
-        $anfang = '<div style="display:none;">';
-      $output .= $anfang.'NO POST FOR CAT-ID '. $catid.'</div>';
-      $k++;
-    }
-  }
-  return $output;
-}
-
-
-//===== DATEN KÜRZEN ================================
-function wptic_shrink_data($content,$maxchar) {
-
-  if(trim($maxchar) != "") {
-    if($maxchar<1)
-      $maxchar = 1;
-    $last_blank = 0;
-    $tag_is_open = false;
-    $open_tag_pos = 0;
-    if(strlen($content)>$maxchar) {
-      for ($i=0; $i<$maxchar; $i++) {
-        if ($content[$i] == " ")
-          $last_blank = $i;
-        if ($content[$i] == "<") {
-          $tag_is_open = true;
-          $open_tag_pos = $i;
-        }
-        if ($content[$i] == ">")
-          $tag_is_open = false;
-      }//for
-      if($tag_is_open) {
-        $close_tag_pos = strpos($content,">",$open_tag_pos);
-        $content = substr($content,0,$close_tag_pos+1)."<-ticend->";
-      }
-      else
-        $content = substr($content,0,$last_blank)."<-ticend->";
-    }//if
-  }
-
- return $content;
-}
-
-$tcpr = "PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo4cHQ7Ij5XUC1UaWNrZXIgcG93ZXJlZCBieSA8YSBocmVmPSJodHRwOi8vd3d3LnN0ZWdhc29mdC5kZSIgdGFyZ2V0PSJfYmxhbmsiPlN0ZUdhU29mdDwvYT48L3NwYW4+";
-
-
-/*
-Nutzung dieses Scripts nur gestattet, wenn Kommentare (PHP und HTML)
-nicht gelöscht werden, oder ein Link zu folgender Adresse gesetzt wird:
-URL: http://www.web-spirit.de/webdesign-tutorial/7/RSS-Feed-auslesen-mit-PHP
-Beschreibung: RSS Feed auslesen mit PHP
-Autor: Sebastian Gollus
-Internet: http://www.web-spirit.de
-Version: 1.0.200905
-*/
-
-// Funktionsaufruf z.B.: getRssfeed("http://www.web-spirit.de/web-spirit.xml","web-spirit","auto",3,3);
-
-function wptic_getRssfeed($rssfeed, $encode="auto", $anzahl, $mode=0) {
-  // $encode e[".*"; "no"; "auto"]
-
-  // $mode e[0; 1; 2; 3]:
-  // 0 = nur Titel und Link der Items weden ausgegeben
-  // 1 = Titel und Link zum Channel werden ausgegeben
-  // 2 = Titel, Link und Beschreibung der Items werden ausgegeben
-  // 3 = 1 & 2
-
-  if(trim($anzahl)=="")
-    $anzahl = 1000;   // hohen (imaginären) Wert Setzen
-
-
-  $rss_data_array = Array();
-  $rss_item_array = Array();
-
-  // Zugriff auf den RSS Feed
-  $data = @file($rssfeed);
-  $data = @implode ("", $data);
-  if(strpos($data,"</item>") > 0) {
-    preg_match_all("/<item.*>(.+)<\/item>/Uism", $data, $items);
-    $atom = 0;
-  }
-  else if(strpos($data,"</entry>") > 0) {
-    preg_match_all("/<entry.*>(.+)<\/entry>/Uism", $data, $items);
-    $atom = 1;
-  }
-
-  // Encodierung
-  if($encode == "auto") {
-    preg_match("/<?xml.*encoding=\"(.+)\".*?>/Uism", $data, $encodingarray);
-    $encoding = $encodingarray[1];
-  }
-  else {
-    $encoding = $encode;
-  }
-
-  //echo "<!-- RSS Feed Script von Sebastian Gollus: http://www.web-spirit.de/webdesign-tutorial/7/RSS-Feed-auslesen-mit-PHP -->\n";
-  //echo "<div class=\"rssfeed_".$cssclass."\">\n";
-
-  // Titel und Link zum Channel
-  if($mode == 1 || $mode == 3) {
-    if(strpos($data,"</item>") > 0) {
-      $data = preg_replace("/<item.*>(.+)<\/item>/Uism", '', $data);
-    }
-    else {
-      $data = preg_replace("/<entry.*>(.+)<\/entry>/Uism", '', $data);
-    }
-    preg_match("/<title.*>(.+)<\/title>/Uism", $data, $channeltitle);
-    if($atom == 0) {
-      preg_match("/<link>(.+)<\/link>/Uism", $data, $channellink);
-    }
-    else if($atom == 1) {
-      preg_match("/<link.*alternate.*text\/html.*href=[\"\'](.+)[\"\'].*\/>/Uism", $data, $channellink);
-    }
-
-    $channeltitle = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $channeltitle);
-    $channellink = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $channellink);
-
-    //echo "<h1><a href=\"".$channellink[1]."\" title=\"";
-    //$channel_headline .= '<a href="'.$channellink[1].'" title='";
-
-    $rss_data_array[1] = $channellink[1];
-
-    if($encode != "no") {
-      //echo htmlentities($channeltitle[1],ENT_QUOTES,$encoding);
-      $rss_data_array[0] = htmlentities($channeltitle[1],ENT_QUOTES,$encoding);
-    }
-    else {
-      //echo $channeltitle[1];
-      $rss_data_array[0] = $channeltitle[1];
-    }
-    //echo "\">";
-    /*
-    if($encode != "no") {
-      echo htmlentities($channeltitle[1],ENT_QUOTES,$encoding);
-    }
-    else {
-      echo $channeltitle[1];
-    }
-    echo "</a></h1>\n";
-    */
-  }
-
-  // Titel, Link und Beschreibung der Items
-  $k=0;
-  if(is_array($items[1])) {
-  foreach ($items[1] as $item) {
-    preg_match("/<title.*>(.+)<\/title>/Uism", $item, $title);
-    if($atom == 0) {
-      preg_match("/<link>(.+)<\/link>/Uism", $item, $link);
-    }
-    else if($atom == 1) {
-      preg_match("/<link.*alternate.*text\/html.*href=[\"\'](.+)[\"\'].*\/>/Uism", $item, $link);
-    }
-    if($atom == 0) {
-      preg_match("/<description>(.*)<\/description>/Uism", $item, $description);
-    }
-    elseif($atom == 1) {
-      preg_match("/<summary.*>(.*)<\/summary>/Uism", $item, $description);
-    }
-
-    $title = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $title);
-    $description = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $description);
-    $link = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $link);
-
-    //echo "<p class=\"link\">\n";
-    //echo "<a href=\"".$link[1]."\" title=\"";
-
-    $rss_item_array[$k][1] = $link[1];
-
-    if($encode != "no") {
-      //echo htmlentities($title[1],ENT_QUOTES,$encoding);
-      $rss_item_array[$k][0] = htmlentities($title[1],ENT_QUOTES,$encoding);
-    }
-    else {
-      //echo $title[1];
-      $rss_item_array[$k][0] = $title[1];
-    }
-    //echo "\">";
-    /*
-    if($encode != "no") {
-      echo htmlentities($title[1],ENT_QUOTES,$encoding)."</a>\n";
-    }
-    else {
-      echo $title[1]."</a>\n";
-    }
-    echo "</p>\n";
-    */
-
-
-    if($mode == 2 || $mode == 3 && ($description[1]!="" && $description[1]!=" ")) {
-      //echo "<p class=\"description\">\n";
-      if($encode != "no") {
-        //echo htmlentities($description[1],ENT_QUOTES,$encoding)."\n";
-        $rss_item_array[$k][2] = htmlentities($description[1],ENT_QUOTES,$encoding);
-      }
-      else {
-        //echo $description[1];
-        $rss_item_array[$k][2] = $description[1];
-      }
-      //echo "</p>\n";
-    }
-    if ($anzahl-- <= 1) break;
-    $k++;
-  }
-  //echo "</div>\n\n";
-  }
-  $rss_data_array[2] = $rss_item_array;
-
-  return $rss_data_array;
-}
-
-
+//===== WP-Ticker-Widget =====
+@include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."wp-ticker-widget.php");
 
 
 ?>

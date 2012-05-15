@@ -18,9 +18,15 @@
   $tickerintime_info_w = "ms";
   $tickerouttime_w = "Fade out";
   $tickerouttime_info_w = "ms";
+
+  $tickerreloadtime_w = "Reaload interval";
+  $tickerreloadtime_info_w = "min. (0 or blank: no auto. reload)";
+  $tickerreloadpausetime_w = "Reload delay";
+  $tickerreloadpausetime_info_w = "s (0 or blank: no pause)";
+
   $tickertype_w = "Type of ticker";
   $data_txt_db = "Select categories";
-  $data_txt_own = "Type in own text (separated with ;;)";
+  $data_txt_own = "Custom text";
   $data_txt_rss = "Type in Feed URLs (separated with Return)";
   $tickermaxitems_w = "Max. items";
   $tickermaxitems_info_w = "empty: show all";
@@ -30,6 +36,17 @@
   $template_head_w = "Variable of headline ";
   $template_content_w = "Variable of content";
   $memo_w = "Memo";
+
+  $own_ticker_delete_w = "Do you want to delete ticker text with ID=";
+  $own_ticker_startdata_w = "Start Date";
+  $own_ticker_enddata_w = "End Date";
+  $own_ticker_autodel_w = "auto. Delete";
+  $own_ticker_neu_w = "Add";
+  $own_ticker_texthinweis = "Your text";
+
+  $tag_w = "Day";
+  $monat_w = "Month";
+  $jahr_w = "Year";
 
   $ticker_head_w = "Added Ticker";
 
@@ -42,6 +59,9 @@
   $code_info_w = "Integrate that code:\\n";
 
   $speichern_w = "Save";
+  $abbruch_w = "Cancle";
+
   $fuﬂnote_w = "New script modules an updates you will find at <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a>.";
+
 
 ?>

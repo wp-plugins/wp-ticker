@@ -1,0 +1,19 @@
+.fe_txt {
+  font-size: 11px;
+}
+
+.fe_date {
+  width: 60px;
+}
+
+.wptic_data_basic {
+ width: 700px;
+ margin: 0
+ border: solid 1px #000; /*#D2D2D2;*/
+}
+
+
+#wptic_datamenu {
+  border-top:0px;
+  background-color:#EBEBEB;
+}

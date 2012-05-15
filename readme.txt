@@ -1,40 +1,51 @@
 === WP-Ticker ===
 Contributors: Stephan Gaertner
 Donate link: http://www.stegasoft.de
-Tags: news,ticker,newsticker,textticker,text,fader,scroller,rss,atom
-Requires at least: 2.6
-Tested up to: 3.1
-Stable tag: 0.131
+Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,widget
+Requires at least: 3.3
+Tested up to: 3.3.1
+Stable tag: 1.0
 
 
 == Description ==
 Wp-Ticker ist eigentlich die Weiterentwicklung des beliebten WordPress-Plugins Ticker.
 Er basiert auf jQuery und es ist nun moeglich, mehrere Ticker-Instanzen zu erstellen.
-D. h. es koennen nun mehrere Ticker auf einer Seite/in einem Artikel dargestellt werden.
+D. h. es koennen mehrere Ticker auf einer Seite/in einem Artikel dargestellt werden.
 Ausserdem wurde der CSS-Style erheblich vereinfacht. Alle Ticker werden
 ueber eine zentrale Style-Datei formatiert (Groesse, Aussehen, etc.).
 Der Kontent wird nicht mehr in einem IFrame angezeigt, sondern direkt in Div-Elementen.
 Die Scripte koennen modular erweitert werden. Neue Module und Updates werden unter
 www.stegasoft.de veroeffentlicht.
+Ab Version 1.0 kann WP-Ticker auch als Live-Ticker genutzt werden, da der Inhalt per
+Ajax geladen wird. D. h. es ist kein Reload der Seite notwendig, um Aktualisierungen
+zu sehen.
 
-Im Gegensatz zu Ticker koennen leider keine Klicks mehr bei eigenem Text gezaehlt werden.
-Auch die Kalender-Funktion bei eigenen Texten ist (noch) nicht vorhanden.
+Im Gegensatz zu Ticker koennen leider (noch) keine Klicks bei eigenem Text gezaehlt werden.
 
-Die Datenbankabfragen wurden komplett ueberarbeitet. Somit sollte die Kompatibilitaet zu
+Die Datenbankabfragen wurden ueberarbeitet. Somit sollte die Kompatibilitaet zu
 zukuenftigen WordPress-Versionen gewaehrleistet sein.
 
-Mit WP-Ticker koennen nun auch (die meisten) ATOM-Feeds geparst werden.
+Mit WP-Ticker koennen (die meisten) ATOM-Feeds geparst werden.
 
 
 == Copyright ==
 Wordpress - Plugin "Wp-Ticker"
-(c) 2010-2011 by SteGaSoft, Stephan Gaertner
+(c) 2010-2012 by SteGaSoft, Stephan Gaertner
 Www: http://www.stegasoft.de
 eMail: s. website
-
+Der Copyright-Hinweis muss sichtbar am Ticker erhalten bleiben!
+Weitere Infos dazu finden Sie unter http://www.stegasoft.de/wordpress-plugin-wp-ticker/
+im Abschnitt "Lizenz".
 
 
 == Historie ==
+Version 1.0 (01/2012)
+ - Kontent wird mit AJAX eingelesen, d. h. Aktualisierungen werden ohne
+   Seiten-Reload angezeigt.
+ - verbesserte Verwaltung von eigenem Text mit Start-/End-Funktion der Anzeige
+   und auto. Loeschen der Eintraege.
+ - WP-Ticker kann nun auch als Widget eingebunden werden
+
 Version 0.131 (05.04.2011)
  - Kleiner Bugfix bei der Darstellung von Datenbank-Inhalten.
 
@@ -84,16 +95,21 @@ ID sind aenderbar.
 
 Datenquelle:
 Hier koennen Sie definieren, woher der Ticker seine Daten beziehen soll.
-Je nach Auswahl werden Kategorien oder ein Textfeld eingeblendet. Entsprechend muss eine
-Auswahl getroffen oder das Textfeld mit Daten gefuellt werden.
+Je nach Auswahl werden Kategorien, eine Tabelle oder ein Textfeld eingeblendet. Entsprechend muss eine
+Auswahl getroffen oder die Tabelle/das Textfeld mit Daten gefuellt werden.
 
 Dauer fuer
 Anzeige:     Anzeigezeit des Kontents in Millisekunden
 Einblendung: Einblendezeit (Fadein, Slidein etc.) des Kontents in Millisekunden
 Ausblendung: Ausblendezeit (Fadeout, Slideout etc.) des Kontents in Millisekunden
+ 
+ Beachten Sie bitte, dass die Summe aus Einblendung und Ausblendung kleiner der Anzeigezeit sein sollte, da
+ es sonst zu ungewollten Effekten kommen kann (aber vielleicht gefaellt Ihnen auch der Effekt).
 
-Beachten Sie bitte, dass die Summe aus Einblendung und Ausblendung kleiner der Anzeigezeit sein sollte, da
-es sonst zu ungewollten Effekten kommen kann (aber vielleicht gefaellt Ihnen auch der Effekt).
+Reaload-Intervall: Dauer in Minuten, bis der Kontent aktualisiert wird, 0 oder leer: kein Reload.
+ Tragen sie hier keine zu kurzen Reload-Zeiten ein
+Reaload-Pause: Anzeige-Dauer in Sekunden des Reload-Textes bzw. Bildes  (0 oder leer: kein Reload.
+ Tragen sie hier relativ kurze Zeiten ein.
 
 Tickertyp:
 Hier koennen Sie den Anzeigetyp des Tickers auswaehlen. Je nach eingebundenen Modulen wird die Auswahlliste
@@ -118,10 +134,15 @@ Hier koennen Sie eine Notiz oder Info zum Ticker eingeben, z.B. auf welcher Seit
 Somit koennen Sie den Ticker besser identifizieren.
 
 
+Start-Datum und End-Datum geben an, ab bzw. bis wann der eigene Text angezeigt werden soll.
+Ist "auto. Loeschen" ausgewählt, werden die eigenen Text automatisch unwiderruflich geloescht.
+
+
 == Ticker einbinden ==
 Wenn Sie einen Ticker erstellt haben, klicken Sie einfach in der unteren Tabelle in der entspr. Zeile
 auf den Button [Code]. Kopieren Sie sich den Code entweder fuer die Einbindung in eine Template-Datei oder
 in eine(n) Post/Seite und fuegen Sie diesen an entspr. Stelle ein.
+Noch einfacher geht es, indem Sie WP-Ticker als Widget einbinden. Allerdings ist nur eine Instanz moeglich!
 
 Beachten Sie bitte, dass nicht mehrere Ticker mit gleicher ID auf der selben Seite angezeigt werden!
 
