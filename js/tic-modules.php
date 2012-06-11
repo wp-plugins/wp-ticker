@@ -9,7 +9,7 @@ $dir = opendir($verzeichnis);
 while($datei = readdir($dir)) {
   if (is_file($verzeichnis.$datei) && (substr($datei, -3, 3) == "php")) {
     $ini_data = parse_ini_file($verzeichnis.$datei);
-    $code .= $ini_data["code"]."\n";
+    $code .= stripslashes($ini_data["code"])."\n";
   }
 }
 echo $code;
