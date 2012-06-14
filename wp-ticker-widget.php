@@ -117,9 +117,9 @@ JS;
       $memo = word_substr($ticdat->Memo, 30, 3, 3);
 
       if($sel_ticid==$ticdat->ID)
-        $ticker_liste .= '<option value="'.$ticdat->ID.'" selected>'.$ticdat->ID.': '.$memo.'</option';
+        $ticker_liste .= '<option value="'.$ticdat->ID.'" selected>'.$ticdat->ID.': '.$memo.'</option>';
       else
-        $ticker_liste .= '<option value="'.$ticdat->ID.'">'.$ticdat->ID.': '.$memo.'</option';
+        $ticker_liste .= '<option value="'.$ticdat->ID.'">'.$ticdat->ID.': '.$memo.'</option>';
     } //foreach
 
 
