@@ -35,6 +35,8 @@
   $template_w = "Template";
   $template_head_w = "Variable of headline ";
   $template_content_w = "Variable of content";
+  $template_date_w = "Variable of date";
+  $template_time_w = "Variable of time"; 
   $memo_w = "Memo";
 
   $own_ticker_delete_w = "Do you want to delete ticker text with ID=";

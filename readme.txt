@@ -1,10 +1,10 @@
 === WP-Ticker ===
 Contributors: Stephan Gaertner
 Donate link: http://www.stegasoft.de
-Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,widget
-Requires at least: 3.3
+Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom
+Requires at least: 2.6
 Tested up to: 3.3.1
-Stable tag: 1.0
+Stable tag: 1.1
 
 
 == Description ==
@@ -39,8 +39,14 @@ im Abschnitt "Lizenz".
 
 
 == Historie ==
+Version 1.1
+ - Datum und Zeit als Template-Variable eingefuehrt
+
+Version 1.01 (11.06.2012)
+ - kleine Anpassung für das Modul Tendless
+
 Version 1.0 (01/2012)
- - Kontent wird mit AJAX eingelesen, d. h. Aktualisierungen werden ohne
+ - Kontent wir mit AJAX eingelesen, d. h. Aktualisierungen werden ohne
    Seiten-Reload angezeigt.
  - verbesserte Verwaltung von eigenem Text mit Start-/End-Funktion der Anzeige
    und auto. Loeschen der Eintraege.
@@ -102,7 +108,7 @@ Dauer fuer
 Anzeige:     Anzeigezeit des Kontents in Millisekunden
 Einblendung: Einblendezeit (Fadein, Slidein etc.) des Kontents in Millisekunden
 Ausblendung: Ausblendezeit (Fadeout, Slideout etc.) des Kontents in Millisekunden
- 
+
  Beachten Sie bitte, dass die Summe aus Einblendung und Ausblendung kleiner der Anzeigezeit sein sollte, da
  es sonst zu ungewollten Effekten kommen kann (aber vielleicht gefaellt Ihnen auch der Effekt).
 
@@ -163,6 +169,12 @@ geben Sie einfach folgende Bezeichnung in der Datei ein:
  ...
 }
 
+
+== Gewaehrleistung ==
+Es gibt keine Gewaehrleistung fuer die Funktionalitaet von WP-Ticker. Ausserdem uebernimmt der Autor/Programmierer
+von WP-Ticker keine Garantie fuer evtl. Datenverluste oder sonstige Beeintraechtigungen, die evtl. durch die
+Nutzung von WP-Ticker entstanden sind.
+Die Nuzung von WP-Ticker geschieht auf eigenes Risiko des jeweiligen Nutzers.
 
 
 

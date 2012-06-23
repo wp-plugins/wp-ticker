@@ -3,7 +3,7 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
 Description: (Live-) News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de. F&uuml;r WordPress ab Version 3.3
-Version: 1.01
+Version: 1.1
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
@@ -14,7 +14,7 @@ $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.01";
+$wpticversion = "1.1";
 
 
 
@@ -340,6 +340,9 @@ function wptic_options_page() {
   else
     $wptic_deinstall_check = "";
 
+  if(empty($template))
+    $template = "%tic_date%<br />".chr(13)."%tic_title%<br />".chr(13)."%tic_content%";
+
 
   //+++++ MODULE AUSLESEN +++++++++++
   $verzeichnis = dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR."wp-content/plugins/wp-ticker/modules/";
@@ -492,7 +495,7 @@ function wptic_options_page() {
    <tr><td><?php echo $tickermaxitems_w; ?>:</td><td> <input type="text" name="wptic_itemcount" value="5" style="width:60px;" /> (<?php echo $tickermaxitems_info_w; ?>)</td></tr>
    <tr><td><?php echo $tickermaxchars_w; ?>:</td><td> <input type="text" name="wptic_charcount" value="70" style="width:60px;" /> (<?php echo $tickermaxchars_info_w; ?>)</td></tr>
 
-   <tr><td valign="top"><?php echo $template_w; ?>:</td><td valign="top"><textarea name="wptic_template" style="width:250px;height:80px;float:left;">%tic_title%<br /><?php echo chr(13); ?>%tic_content%</textarea> %tic_title% - &nbsp; &nbsp; &nbsp;<?php echo $template_head_w; ?><br /> %tic_content% - <?php echo $template_content_w; ?></tr>
+   <tr><td valign="top"><?php echo $template_w; ?>:</td><td valign="top"><textarea name="wptic_template" style="width:250px;height:80px;float:left;"><?php echo $template; ?></textarea> %tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br /> %tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br /> %tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br /> %tic_content% - <?php echo $template_content_w; ?></tr>
 
    <tr><td valign="top"><?php echo $memo_w; ?>:</td><td><textarea name="wptic_memo" style="width:250px;height:80px;"></textarea></tr>
 

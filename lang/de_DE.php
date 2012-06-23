@@ -35,6 +35,8 @@
   $template_w = "Template";
   $template_head_w = "Variable f&uuml;r &Uuml;berschrift";
   $template_content_w = "Variable f&uuml;r Kontent";
+  $template_date_w = "Variable f&uuml;r Datum";
+  $template_time_w = "Variable f&uuml;r Zeit"; 
   $memo_w = "Memo";
 
 

@@ -132,11 +132,23 @@ function wptic_get_rssdata($no_posts, $urls, $maxchar,$template) {
 
       $content = wptic_shrink_data($items[2],$maxchar);
 
+      $datum_zeit = $items[3];
+      $datum = explode("-",$datum_zeit[0]);
+      $zeit = explode(":",$datum_zeit[1]);
+      $itemtimestamp = mktime((int)$zeit[0],(int)$zeit[1],(int)$zeit[2],(int)$datum[1],(int)$datum[2],(int)$datum[0]);
+
+
+      $datum = date(get_option('date_format'),$itemtimestamp);
+      $zeit = date("H:i",$itemtimestamp);
+
       $template_stack = str_replace("%tic_title%",$headline.$item_head,$template);
       if(trim($content)!="")
         $template_stack = str_replace("%tic_content%",$content,$template_stack);
       else
         $template_stack = str_replace("%tic_content%","",$template_stack);
+
+      $template_stack = str_replace("%tic_date%",$datum,$template_stack);
+      $template_stack = str_replace("%tic_time%",$zeit,$template_stack);
 
       $template_stack = str_replace("<-ticend->",'<a href="'.$link.'" target="_blank">'.$more_tag.'</a>',$template_stack);
 
@@ -171,15 +183,19 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
   foreach($catid_arr as $catid) {
 
     if($random_sort)
-      $request = "SELECT DISTINCT wposts.* FROM $wpdb->posts wposts LEFT JOIN $wpdb->postmeta wpostmeta ON wposts.ID = wpostmeta.post_id LEFT JOIN $wpdb->term_relationships ON (wposts.ID = $wpdb->term_relationships.object_id) LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) WHERE $wpdb->term_taxonomy.taxonomy = 'category' AND $wpdb->term_taxonomy.term_id ='$catid' AND wposts.post_status='publish' AND wposts.post_type='post' ORDER BY RAND() DESC$limit";
+      $sort_zusatz = "RAND()";
     else
-      $request = "SELECT DISTINCT wposts.* FROM $wpdb->posts wposts LEFT JOIN $wpdb->postmeta wpostmeta ON wposts.ID = wpostmeta.post_id LEFT JOIN $wpdb->term_relationships ON (wposts.ID = $wpdb->term_relationships.object_id) LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) WHERE $wpdb->term_taxonomy.taxonomy = 'category' AND $wpdb->term_taxonomy.term_id ='$catid' AND wposts.post_status='publish' AND wposts.post_type='post' ORDER BY wposts.post_date DESC$limit";
+      $sort_zusatz = "wposts.post_date DESC";
+
+    $request = "SELECT DISTINCT wposts.* FROM $wpdb->posts wposts LEFT JOIN $wpdb->postmeta wpostmeta ON wposts.ID = wpostmeta.post_id LEFT JOIN $wpdb->term_relationships ON (wposts.ID = $wpdb->term_relationships.object_id) LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) WHERE $wpdb->term_taxonomy.taxonomy = 'category' AND $wpdb->term_taxonomy.term_id ='$catid' AND wposts.post_status='publish' AND wposts.post_type='post' ORDER BY ".$sort_zusatz.$limit;
     $posts = $wpdb->get_results($request);
 
     if($posts) {
 
       foreach ($posts as $post) {
         $post_title = stripslashes($post->post_title);
+        $post_time = get_the_time("", $post->ID );
+        $post_date = get_the_time(get_option('date_format'), $post->ID );
         $permalink = get_permalink($post->ID);
         $post_content = stripslashes($post->post_content);
 
@@ -195,6 +211,8 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
 
         $template_stack = str_replace("%tic_title%",'<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">' . $post_title . '</a>',$template);
         $template_stack = str_replace("%tic_content%",$post_content,$template_stack);
+        $template_stack = str_replace("%tic_date%",$post_date,$template_stack);
+        $template_stack = str_replace("%tic_time%",$post_time,$template_stack);
 
         $output .= $anfang.$template_stack.'</div>';
         $template_stack = "";
@@ -344,20 +362,24 @@ function wptic_getRssfeed($rssfeed, $encode="auto", $anzahl, $mode=0) {
     preg_match("/<title.*>(.+)<\/title>/Uism", $item, $title);
     if($atom == 0) {
       preg_match("/<link>(.+)<\/link>/Uism", $item, $link);
+      preg_match("/<pubDate>(.+)<\/pubDate>/Uism", $item, $datum);
+      preg_match("/<description>(.*)<\/description>/Uism", $item, $description);
+      $datum = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $datum);
+      $datum = parse_feed_date("", $datum[0]);
     }
     else if($atom == 1) {
       preg_match("/<link.*alternate.*text\/html.*href=[\"\'](.+)[\"\'].*\/>/Uism", $item, $link);
-    }
-    if($atom == 0) {
-      preg_match("/<description>(.*)<\/description>/Uism", $item, $description);
-    }
-    elseif($atom == 1) {
+      preg_match("/<updated>(.+)<\/updated>/Uism", $item, $datum);
       preg_match("/<summary.*>(.*)<\/summary>/Uism", $item, $description);
+      $datum = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $datum);
+      $datum = parse_feed_date("atom", $datum[0]);
     }
+
 
     $title = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $title);
     $description = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $description);
     $link = preg_replace('/<!\[CDATA\[(.+)\]\]>/Uism', '$1', $link);
+
 
     $rss_item_array[$k][1] = $link[1];
 
@@ -376,15 +398,42 @@ function wptic_getRssfeed($rssfeed, $encode="auto", $anzahl, $mode=0) {
       else {
         $rss_item_array[$k][2] = $description[1];
       }
+      $rss_item_array[$k][3] = $datum;
     }
     if ($anzahl-- <= 1) break;
     $k++;
   }
   }
+
   $rss_data_array[2] = $rss_item_array;
 
   return $rss_data_array;
 }
+
+
+function parse_feed_date($type="", $datum) {
+  $parsed_date = "";
+  $stack = "";
+  $stack_datum = "";
+  $stack_zeit = "";
+  $mon_array = array("Jan"=>"01","Feb"=>"02","Mar"=>"03","Apr"=>"04","May"=>"05","Jun"=>"06","Jul"=>"07","Aug"=>"08","Sep"=>"09","Oct"=>"10","Nov"=>"11","Dec"=>"12");
+
+  if($type=="atom") {
+    $parsed_date = explode ("T",$datum);
+    $stack_datum = $parsed_date[0];
+    $stack = explode("+",$parsed_date[1]);
+    $stack_zeit = $stack[0];
+    $parsed_date = array("$stack_datum","$stack_zeit");
+  }
+  else {
+    $parsed_date = explode(" ",$datum);
+    $stack_datum = $parsed_date[3]."-".$mon_array[$parsed_date[2]]."-".$parsed_date[1];
+    $stack_zeit = $parsed_date[4];
+    $parsed_date = array("$stack_datum","$stack_zeit");
+  }
+  return $parsed_date;
+}
+
 
 
   echo $code;
