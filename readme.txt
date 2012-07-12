@@ -39,6 +39,9 @@ im Abschnitt "Lizenz".
 
 
 == Historie ==
+Version 1.1.1 (12.07.2012)
+ - kleine Anpassung fuer aufwendigere Modul-Scripte
+
 Version 1.1
  - Datum und Zeit als Template-Variable eingefuehrt
 

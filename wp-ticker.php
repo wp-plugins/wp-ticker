@@ -3,7 +3,7 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/
 Description: (Live-) News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de. F&uuml;r WordPress ab Version 3.3
-Version: 1.1
+Version: 1.1.1
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
@@ -14,7 +14,7 @@ $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.1";
+$wpticversion = "1.1.1";
 
 
 
@@ -509,6 +509,7 @@ function wptic_options_page() {
 
   <hr />
 
+
   <div style="margin-bottom:10px;"><b><?php echo $ticker_head_w; ?></b></div>
   <form name="tictableform" action="#">
   <?php echo $ticker_tabelle; ?>
@@ -592,6 +593,7 @@ function wptic_options_page() {
 
     document.form1.wptic_id.disabled = false;
   }
+
 
   function ticker_delete(id) {
     if(confirm("<?php echo $delete_quest_w; ?>"+id+" ?")) {
