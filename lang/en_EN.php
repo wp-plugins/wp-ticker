@@ -3,6 +3,14 @@
   $allgemeines_w = "Miscellaneous";
   $deinstall_w = "Deinstall";
   $deinstall_hinweis_w = "if checked, all options belong to the plugin will be removed from database after disabling this plugin";
+  $edit_css_button_w = "Edit CSS";
+  $edit_css_texthinweis = "Edit the layout of the tickers here";
+  $edit_css_permission = "<b>Please check the file permission of <em>style.css</em></b>";
+  $import_modul_button_w = "Import module";
+  $import_modul_texthinweis = "Select module";
+  $import_modul_upload_ok = "Module upload <span style='color:#008000;'>OK</span>";
+  $import_modul_upload_err = "Module upload <span style='color:#800000;'>ERROR</span>";
+
 
   $codegenerator_w = "Ticker settings";
   $tickerid_w = "Ticker ID";
@@ -18,6 +26,7 @@
   $tickerintime_info_w = "ms";
   $tickerouttime_w = "Fade out";
   $tickerouttime_info_w = "ms";
+  $ticker_random_w = "random sorting";
 
   $tickerreloadtime_w = "Reaload interval";
   $tickerreloadtime_info_w = "min. (0 or blank: no auto. reload)";
@@ -36,8 +45,9 @@
   $template_head_w = "Variable of headline ";
   $template_content_w = "Variable of content";
   $template_date_w = "Variable of date";
-  $template_time_w = "Variable of time"; 
+  $template_time_w = "Variable of time";
   $memo_w = "Memo";
+  $memo_hinweis_w = "&nbsp;Your notes on the ticker<br />&nbsp;(will be shown in the widget).";
 
   $own_ticker_delete_w = "Do you want to delete ticker text with ID=";
   $own_ticker_startdata_w = "Start Date";
@@ -49,6 +59,7 @@
   $tag_w = "Day";
   $monat_w = "Month";
   $jahr_w = "Year";
+  $heute_w = "Today";
 
   $ticker_head_w = "Added Ticker";
 
@@ -62,6 +73,7 @@
 
   $speichern_w = "Save";
   $abbruch_w = "Cancle";
+  $schliessen_w = "Close";
 
   $fuﬂnote_w = "New script modules an updates you will find at <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a>.";
 

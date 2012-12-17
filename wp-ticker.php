@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: WP-Ticker
-Plugin URI: http://www.stegasoft.de/
-Description: (Live-) News Ticker auf jQuery-Basis, RSS-Reader basiert auf dem Script von Sebastian Gollus: http://www.web-spirit.de. F&uuml;r WordPress ab Version 3.3
-Version: 1.1.1
+Plugin URI: http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/
+Description: Modularer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
+Version: 1.2
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
@@ -14,7 +14,7 @@ $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.1.1";
+$wpticversion = "1.2";
 
 
 
@@ -40,14 +40,10 @@ function wpticjs2adminhead() {
   $jscript_includes = "\n";
   $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/admin.css' type='text/css' />\n";
 
-  //$jscript_includes .= "<script src=\"".plugins_url()."/wp-ticker/js/fancybox/jquery.fancybox.js\" type=\"text/javascript\"></script>\n";
-  //$jscript_includes .= "<link rel='stylesheet' href= ".plugins_url()."/wp-ticker/js/fancybox/jquery.fancybox.css' />\n";
-
   wp_register_script('fancy', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.js',array( 'jquery'),'1.3.4',true);
   wp_enqueue_script('fancy', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.js',array( 'jquery'),'1.3.4',true);
   wp_register_style('fancystyle', plugins_url().'/wp-ticker/js/fancybox/jquery.fancybox.css');
   wp_enqueue_style('fancystyle');
-
 
   echo $jscript_includes;
 }
@@ -92,7 +88,7 @@ function wptic_install() {
   include_once (ABSPATH."/wp-admin/upgrade-functions.php");
   @maybe_create_table($wpdb->prefix . "wp_ticker", $install_query);
 
-  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker_content (ID bigint(20) unsigned NOT NULL auto_increment, Ticker_ID INT NOT NULL, Daten text NOT NULL, Zeige_Start DATE NOT NULL, Zeige_Ende DATE NOT NULL, Auto_Delete varchar(2) NOT NULL, PRIMARY KEY (ID), INDEX ( Ticker_ID ))";
+  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker_content (ID bigint(20) unsigned NOT NULL auto_increment, Ticker_ID INT NOT NULL, Daten text NOT NULL, Zeige_Start DATE NOT NULL, Zeige_Ende DATE NOT NULL, Auto_Delete varchar(2) NOT NULL, Erstell_Stamp bigint(20) NOT NULL, PRIMARY KEY (ID), INDEX ( Ticker_ID ))";
   @maybe_create_table($wpdb->prefix . "wp_ticker_content", $install_query);
 
 }
@@ -243,6 +239,38 @@ function wptic_get_params($atts) {
 add_shortcode('wpticker', 'wptic_get_params');
 
 
+//------------ [wptictext] ----------------------------------------------
+function wptic_sctictext($atts) {
+  global $wpdb,$wptic_options,$wptic_plugin_dir,$aus,$loader;
+
+  extract(shortcode_atts(array('id'=>1,'sort'=>'ASC'), $atts));
+
+  $sort_values = array("ASC","DESC","RAND()");
+  if(!in_array(strtoupper($sort),$sort_values))
+    $sort = "ASC";
+
+  if(strtoupper($sort)=="RAND()")
+    $sort = "ORDER BY RAND()";
+  else
+    $sort = "ORDER BY ID $sort";
+
+  $output = "";
+
+  $heute = date("Y-m-d",time());
+
+  $befehl = "SELECT ID,Ticker_ID,Daten,Zeige_Start,Zeige_Ende,Auto_Delete FROM ".$wpdb->prefix ."wp_ticker_content WHERE Ticker_ID=$id AND Zeige_Start<='$heute' ".$sort;
+  $ticdaten = $wpdb->get_results($befehl);
+
+  foreach ($ticdaten as $ticdat) {
+    $anfang = '<div class="tic_owntext_item">';
+    $output .= $anfang.stripslashes($ticdat->Daten).'</div>';
+  }
+
+  return $output;
+}
+add_shortcode('wptictext', 'wptic_sctictext');
+
+
 function decode_tcpr_wp($do=flase) {
   if($do)
     $out = "";
@@ -295,6 +323,8 @@ function wptic_options_page() {
     else
       $data = $_POST['wptic_data'];
 
+    $tic_random = $_POST['wptic_random'];
+
     $typ = $_POST['wptic_type'];
     $template = $_POST['wptic_template'];
     $memo = $_POST['wptic_memo'];
@@ -311,7 +341,8 @@ function wptic_options_page() {
                       "itemcount"=>$_POST['wptic_itemcount'],
                       "charcount"=>$_POST['wptic_charcount'],
                       "reloadInterval"=>$_POST['wptic_reloadtime'],
-                      "reloaderPause"=>$_POST['wptic_reloadpausetime']);
+                      "reloaderPause"=>$_POST['wptic_reloadpausetime'],
+                      "tic_random"=>$_POST['wptic_random']);
 
     //++++++ Ticker speichern/updaten/löschen +++++++
     if($_POST[ 'wptic_aktion' ]=="insert")
@@ -324,7 +355,6 @@ function wptic_options_page() {
       $befehl = "INSERT INTO ".$wpdb->prefix ."wp_ticker (Optionen,Daten,Typ,Template,Memo) VALUES ('".serialize($optionen)."','$data','$typ','$template','$memo')";
 
     $wpdb->query($befehl);
-
 
 
     // Put an options updated message on the screen
@@ -367,7 +397,7 @@ function wptic_options_page() {
   $cats = get_categories('');
   foreach ($cats as $cat) {
      //$cat_items .= '<option value="'.$cat->term_id.'">'.$cat->name.'</option>';
-     $cat_items .= '<input type="checkbox" name="wptic_cat['.$cat->term_id.']" value="'.$cat->term_id.'" />'.$cat->name." &nbsp; &nbsp; ";
+     $cat_items .= '<input type="checkbox" name="wptic_cat['.$cat->term_id.']" value="'.$cat->term_id.'" /> '.$cat->name." &nbsp; &nbsp; ";
 
   }
 
@@ -376,7 +406,7 @@ function wptic_options_page() {
   $befehl = "SELECT ID,Optionen,Daten,Typ,Template,Memo FROM ".$wpdb->prefix ."wp_ticker ORDER BY ID ASC";
   $ticdaten = $wpdb->get_results($befehl);
   $ticker_tabelle = '<table id="tictable" class="widefat">';
-  $ticker_tabelle .= '<thead><tr><th align="center" style="width:30px;">ID</th><th align="center" style="width:70px;">'.$tickersrc_w.'</th><th align="center" style="width:70px;">'.$tickertype_w.'</th><th style="width:300px;" align="left">Memo</th><th>&nbsp;</th></thead><tbody>';
+  $ticker_tabelle .= '<thead><tr><th style="width:30px;text-align:center;">ID</th><th style="width:70px;text-align:center;">'.$tickersrc_w.'</th><th style="width:70px;text-align:center;">'.$ticker_random_w.'</th><th style="width:70px;text-align:center;">'.$tickertype_w.'</th><th style="width:300px;text-align:left;">Memo</th><th>&nbsp;</th></thead><tbody>';
 
   foreach ($ticdaten as $ticdat) {
     $optionen = unserialize($ticdat->Optionen); //Array()
@@ -388,16 +418,23 @@ function wptic_options_page() {
       $daten = base64_encode($daten);
     $type = $ticdat->Typ;
 
+    if($optionen['tic_random']=="yes")
+      $tic_random_anz = "<img src='$wptic_plugin_dir/images/checked.png' alt='Random sort' title='Random sort' />";
+    else
+      $tic_random_anz = "&nbsp;";
+
     $ticker_tabelle .= '<tr>'.
-                       '<td align="center">'.$ticdat->ID.'</td>'.
-                       '<td align="center">'.$optionen['src'].'</td>'.
-                       '<td align="center">'.$ticdat->Typ.'</td>'.
-                       '<td align="left">'.$ticdat->Memo.'</td>'.
-                       '<td align="right">'.
+                       '<td style="text-align:center;">'.$ticdat->ID.'</td>'.
+                       '<td style="text-align:center;">'.$optionen['src'].'</td>'.
+                       '<td style="text-align:center;">'.$tic_random_anz.'</td>'.
+                       '<td style="text-align:center;">'.$ticdat->Typ.'</td>'.
+                       '<td style="text-align:left;">'.$ticdat->Memo.'</td>'.
+                       '<td  style="text-align:right;">'.
                         '<input type="button" id="ticeditbtn_'.$ticdat->ID.'" name="ticeditbtn_'.$ticdat->ID.'" value="'.$editbtn_w.'" onclick="ticker_edit('.$ticdat->ID.')" /> '.
                         '<input type="button" id="ticdelbtn_'.$ticdat->ID.'" name="ticdelbtn_'.$ticdat->ID.'" value="'.$deletebtn_w.'" onclick="ticker_delete('.$ticdat->ID.')" /> '.
                         '<input type="button" id="ticcodebtn_'.$ticdat->ID.'" name="ticcodetn_'.$ticdat->ID.'" value="'.$codebtn_w.'" onclick="ticker_code('.$ticdat->ID.')"/>'.
                         '<input type="hidden" name="u_src_'.$ticdat->ID.'" value="'.$optionen['src'].'" />'.
+                        '<input type="hidden" name="u_random_'.$ticdat->ID.'" value="'.$optionen['tic_random'].'" />'.
                         '<input type="hidden" name="u_data_'.$ticdat->ID.'" value="'.$daten.'" />'.
                         '<input type="hidden" name="u_showtime_'.$ticdat->ID.'" value="'.$optionen['showtime'].'" />'.
                         '<input type="hidden" name="u_intime_'.$ticdat->ID.'" value="'.$optionen['intime'].'" />'.
@@ -442,49 +479,63 @@ function wptic_options_page() {
   <form name="form1" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
   <input type="hidden" name="wptic_submit_hidden" value="Y" />
 
-  <table border="0" cellpadding="3" cellspacing="0">
-   <tr><td colspan="3"><br /><b><?php echo $allgemeines_w; ?>:</b><br />&nbsp;</td></tr>
+  <table class="admintable">
+   <tr><td colspan="2"><h3><?php echo $allgemeines_w; ?>:</h3></td></tr>
    <tr>
     <td style="width:140px;">
-    <?php echo $deinstall_w; ?>:</td>
+    <b><?php echo $deinstall_w; ?>:</b></td>
     <td><input type="checkbox" name="wptic_deinstall" value="yes"<?php echo $wptic_deinstall_check; ?> />
     <?php echo $deinstall_hinweis_w; ?></td>
    </tr>
-  </table>
-  <br />
-  <table border="0" cellpadding="3" cellspacing="0" >
-   <tr><td colspan="2"><b><?php echo $codegenerator_w; ?>:</b></td></tr>
-   <tr><td><?php echo $tickerid_w; ?>:</td><td><span id="id_span"><?php echo $last_id; ?></span> <input type="hidden" name="wptic_id" value="<?php echo $last_id; ?>" /></td></tr>
    <tr>
-    <td valign="top"><?php echo $tickersrc_w; ?>:</td>
-    <td>
-     <select id="wptic_src" name="wptic_src" onchange="change_data_box(this)" size="1" style="width:110px;">
+    <td colspan="2" style="padding-top:15px;">
+    <input type="button" name="wptic_css_editbut" value="<?php echo $edit_css_button_w; ?>" onclick="edit_css()" />
+    <?php if(current_user_can('administrator')) { ?>
+    <input type="button" name="wptic_modul_importbut" value="<?php echo $import_modul_button_w ; ?>" onclick="import_module()" />
+    <?php } ?>
+
+    </td>
+   </tr>
+  </table>
+
+  <hr style="border:dotted 1px #E6E6E6;" />
+
+  <table class="admintable">
+   <tr><td colspan="2"><h3><?php echo $codegenerator_w; ?>:</h3></td></tr>
+   <tr><td><b><?php echo $tickerid_w; ?>:</b></td><td><span id="id_span"><?php echo $last_id; ?></span> <input type="hidden" name="wptic_id" value="<?php echo $last_id; ?>" /></td></tr>
+   <tr>
+    <td style="vertical-align:top;"><b><?php echo $tickersrc_w; ?>:</b></td>
+    <td style="vertical-align:top;">
+     <select id="wptic_src" name="wptic_src" onchange="change_data_box(this)" size="1" style="width:110px;margin-right:10px;">
      <option value="db"><?php echo $tickersrc_db_w; ?></option>
      <option value="own"><?php echo $tickersrc_own_w; ?></option>
      <option value="rss"><?php echo $tickersrc_rss_w; ?></option>
      </select>
-     <div style="padding:0;margin:0;padding-top:5px;" id="data_txt"> <?php echo $data_txt_db; ?>:</div>
+     <?php echo $ticker_random_w; ?>
+     <input type="checkbox" name="wptic_random" id="tic_random" value="yes" />
+     <div style="padding:0;margin:0;padding-top:5px;" id="data_txt"> <b><?php echo $data_txt_db; ?>:</b></div>
      <div style="padding:0;margin:0;padding-bottom:20px;" id="data_context"> <?php echo $cat_items; ?></div>
     </td>
    </tr>
 
    <tr>
     <td colspan="2">
-     <?php echo $duration_w; ?><br />
+     <b><?php echo $duration_w; ?></b><br />
      <?php echo $tickershowtime_w; ?>: <input type="text" name="wptic_showtime" value="3000" style="width:60px;" /><?php echo $tickershowtime_info_w; ?> &nbsp; &nbsp;
      <?php echo $tickerintime_w; ?>: <input type="text" name="wptic_intime" value="1000" style="width:60px;" /><?php echo $tickerintime_info_w; ?> &nbsp; &nbsp;
      <?php echo $tickerouttime_w; ?>: <input type="text" name="wptic_outtime" value="1000" style="width:60px;" /><?php echo $tickerouttime_info_w; ?>
     </td>
    </tr>
    <tr>
-    <td colspan="2">
-     <?php echo $tickerreloadtime_w; ?>: <input type="text" name="wptic_reloadtime" value="0" style="width:60px;" /><?php echo $tickerreloadtime_info_w; ?> &nbsp; &nbsp;
-     <?php echo $tickerreloadpausetime_w; ?>: <input type="text" name="wptic_reloadpausetime" value="0" style="width:60px;" /><?php echo $tickerreloadpausetime_info_w; ?><br />&nbsp;
-    </td>
+    <td><?php echo $tickerreloadtime_w; ?>:</td><td> <input type="text" name="wptic_reloadtime" value="0" style="width:60px;" /><?php echo $tickerreloadtime_info_w; ?></td>
    </tr>
+   <tr>
+    <td><?php echo $tickerreloadpausetime_w; ?>: </td><td><input type="text" name="wptic_reloadpausetime" value="0" style="width:60px;" /><?php echo $tickerreloadpausetime_info_w; ?></td>
+   </tr>
+   <tr><td colspan="2">&nbsp;</td></tr>
 
    <tr>
-    <td><?php echo $tickertype_w; ?>:</td>
+    <td><b><?php echo $tickertype_w; ?>:</b></td>
     <td>
      <select name="wptic_type" size="1" style="width:110px;" onchange="change_modules(this)">
      <?php echo $modules; ?>
@@ -492,12 +543,11 @@ function wptic_options_page() {
      <span id="hint_box"><?php echo $first_modul; ?></span>
     </td>
    </tr>
-   <tr><td><?php echo $tickermaxitems_w; ?>:</td><td> <input type="text" name="wptic_itemcount" value="5" style="width:60px;" /> (<?php echo $tickermaxitems_info_w; ?>)</td></tr>
-   <tr><td><?php echo $tickermaxchars_w; ?>:</td><td> <input type="text" name="wptic_charcount" value="70" style="width:60px;" /> (<?php echo $tickermaxchars_info_w; ?>)</td></tr>
+   <tr><td><b><?php echo $tickermaxitems_w; ?>:</b></td><td> <input type="text" name="wptic_itemcount" value="5" style="width:60px;" /> (<?php echo $tickermaxitems_info_w; ?>)</td></tr>
+   <tr><td><b><?php echo $tickermaxchars_w; ?>:</b></td><td> <input type="text" name="wptic_charcount" value="70" style="width:60px;" /> (<?php echo $tickermaxchars_info_w; ?>)</td></tr>
 
-   <tr><td valign="top"><?php echo $template_w; ?>:</td><td valign="top"><textarea name="wptic_template" style="width:250px;height:80px;float:left;"><?php echo $template; ?></textarea> %tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br /> %tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br /> %tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br /> %tic_content% - <?php echo $template_content_w; ?></tr>
-
-   <tr><td valign="top"><?php echo $memo_w; ?>:</td><td><textarea name="wptic_memo" style="width:250px;height:80px;"></textarea></tr>
+   <tr><td style="vertical-align: top;"><b><?php echo $template_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_template" style="width:250px;height:80px;float:left;"><?php echo $template; ?></textarea>&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?></td></tr>
+   <tr><td style="vertical-align: top;"><b><?php echo $memo_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_memo" style="width:250px;height:80px;float:left;"></textarea><?php echo $memo_hinweis_w; ?></td></tr>
 
   </table>
 
@@ -526,6 +576,71 @@ function wptic_options_page() {
 
   <script type="text/javascript">
 
+  //===== CSS edit funktionen =====
+  function edit_css() {
+
+   <?php
+    $write_msg = "";
+    if (!is_writable(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css"))
+      $write_msg = $edit_css_permission;
+
+   ?>
+
+
+    var fancy_code = "<b><?php echo $edit_css_texthinweis; ?>:<\/b><br />"+
+                     "<div id='css_content' style='width:590px; height:600px;'><\/div>"+
+                     "<input type='button' value='<?php echo $speichern_w; ?>' onclick='save_css()' style='margin-right:10px;' />"+
+                     "<input type='button' value='<?php echo $abbruch_w; ?>' onclick='close_fancy()' />"+
+                     " <span style='color:#6F0000;'><?php echo $write_msg; ?></span>";
+
+
+    jQuery.fancybox(
+                fancy_code,
+                {
+                        'autoDimensions'        : false,
+                        'width'                         : 600,
+                        'height'                        : 'auto',
+                        'transitionIn'                : 'none',
+                        'transitionOut'                : 'none',
+                }
+    );
+
+   jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "get_css"}, function(data) {
+        jQuery('#css_content').html(data);
+   });
+
+
+  }
+
+  function save_css() {
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "save_css",content: jQuery("#css_edit_content").val()}, function(data) {
+        jQuery('#css_content').html(data);
+   });
+
+  }
+
+  //===== Modul-Import =====
+  function import_module() {
+    var fancy_code = "<b><?php echo $import_modul_texthinweis; ?>:<\/b><br />"+
+                     "<iframe src='<?php echo plugins_url() ."/wp-ticker/tic-functions.php?aktion=get_modulform"; ?>' id='modulframe' style='border:none;'><\/iframe>";
+
+    jQuery.fancybox(
+                fancy_code,
+                {
+                        'autoDimensions'        : false,
+                        'width'                         : 300,
+                        'height'                        : 'auto',
+                        'transitionIn'                : 'none',
+                        'transitionOut'                : 'none',
+                }
+    );
+
+
+  }
+
+
+
+  //===== ticker edit funktion =====
   function ticker_edit(id) {
     document.form1.wptic_aktion.value="update";
     document.form1.wptic_id.value=id;
@@ -571,6 +686,11 @@ function wptic_options_page() {
       document.form1.wptic_data.value = u_daten;
 
     }
+
+    if(document.forms["tictableform"].elements["u_random_"+id].value=="yes")
+      document.form1.wptic_random.checked=true;
+    else
+      document.form1.wptic_random.checked=false;
 
     document.form1.wptic_showtime.value = document.forms["tictableform"].elements["u_showtime_"+id].value;
     document.form1.wptic_intime.value = document.forms["tictableform"].elements["u_intime_"+id].value;
@@ -639,7 +759,7 @@ function wptic_options_page() {
   }
 
 
-  //===== Funktionen für eigenen Tocler-Text =====
+  //===== Funktionen fuer eigenen Ticker-Text =====
   function insert_own_tictext(id) {
 
     <?php
@@ -673,9 +793,9 @@ function wptic_options_page() {
 
     var fancy_code = "<b><?php echo $own_ticker_texthinweis; ?>:<\/b><br />"+
                      "<textarea id='tickertext' style='width:390px; height:200px;'><\/textarea><br />"+
-                     "<table border='0' class='widefat' style='width:390px;'>"+
-                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_startdata_w; ?>:<\/b><\/td><td><select id='startdate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='startdate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='startdate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select><\/td><\/tr>"+
-                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_enddata_w; ?>:<\/b><\/td><td><select id='enddate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='enddate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='enddate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select><\/td><\/tr>"+
+                     "<table class='widefat' style='width:390px;border:none;'>"+
+                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_startdata_w; ?>:<\/b><\/td><td><select id='startdate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='startdate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='startdate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select> <input type='button' value='<= <?php echo $heute_w; ?>' onclick='set_date_today(\"startdate\")'/><\/td><\/tr>"+
+                     "<tr><td style='width:100px;'><b><?php echo $own_ticker_enddata_w; ?>:<\/b><\/td><td><select id='enddate_d' class='fe_txt fe_date' size='1' ><?php echo $tag; ?><\/select><select id='enddate_m' class='fe_txt fe_date' size='1' ><?php echo $monat; ?><\/select><select id='enddate_j' class='fe_txt fe_date' size='1' ><?php echo $jahr; ?><\/select> <input type='button' value='<= <?php echo $heute_w; ?>' onclick='set_date_today(\"enddate\")'/><\/td><\/tr>"+
                      "<tr><td style='width:100px;'><b><?php echo $own_ticker_autodel_w; ?>:<\/b><\/td><td><input type='checkbox' id='autodelete' value='j' /><\/td><\/tr>"+
                      "<\/table>"+
                      "<input type='button' value='<?php echo $speichern_w; ?>' onclick='insert_now("+id+")' style='margin-right:10px;' />"+
@@ -730,6 +850,36 @@ function wptic_options_page() {
 
   }
 
+  function set_date_today(id) {
+    var sel_d = id + "_d";
+    var sel_m = id + "_m";
+    var sel_y = id + "_j";
+
+    var a_day = <?php echo date("d",time()); ?>;
+    var a_mon = <?php echo date("m",time()); ?>;
+    var a_year = <?php echo date("Y",time()); ?>;
+
+    var optionen;
+
+    optionen=document.getElementById(sel_d).options;
+    for(var i=0; i<optionen.length; i++) {
+      if(optionen[i].value==a_day)
+         optionen[i].setAttribute('selected','selected');
+    }
+
+    optionen=document.getElementById(sel_m).options;
+    for(var i=0; i<optionen.length; i++) {
+      if(optionen[i].value==a_mon)
+         optionen[i].setAttribute('selected','selected');
+    }
+
+    optionen=document.getElementById(sel_y).options;
+    for(var i=0; i<optionen.length; i++) {
+      if(optionen[i].value==a_year)
+         optionen[i].setAttribute('selected','selected');
+    }
+
+  }
 
   function edit_own_tictext(ed_id,tic_id) {
     jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "edit", aktion_id: ed_id}, function(data) {
@@ -882,7 +1032,7 @@ function wptic_options_page() {
 
 
 
-  <?
+  <?php
 }
 
 

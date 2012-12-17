@@ -3,6 +3,13 @@
   $allgemeines_w = "Allgemeines";
   $deinstall_w = "Deinstallieren";
   $deinstall_hinweis_w = "l&ouml;scht nach Deaktivierung alle zum Plugin geh&ouml;renden Einstellungen";
+  $edit_css_button_w = "CSS bearbeiten";
+  $edit_css_texthinweis = "Hier k&ouml;nnen Sie das Layout der Ticker bearbeiten";
+  $edit_css_permission = "<b>Bitte pr&uuml;fen Sie die Dateirechte von <em>style.css</em></b>";
+  $import_modul_button_w = "Modul importieren";
+  $import_modul_texthinweis = "Modul ausw&auml;hlen";
+  $import_modul_upload_ok = "Module-Upload <span style='color:#008000;'>OK</span>";
+  $import_modul_upload_err = "Module-Upload <span style='color:#800000;'>FEHLER</span>";
 
   $codegenerator_w = "Ticker-Einstellungen";
   $tickerid_w = "Ticker-ID";
@@ -18,6 +25,7 @@
   $tickerintime_info_w = "ms";
   $tickerouttime_w = "Ausblendung";
   $tickerouttime_info_w = "ms";
+  $ticker_random_w = "zuf&auml;llige Sortierung";
 
   $tickerreloadtime_w = "Reaload-Intervall";
   $tickerreloadtime_info_w = "Min. (0 oder leer: kein auto. Reload)";
@@ -36,10 +44,9 @@
   $template_head_w = "Variable f&uuml;r &Uuml;berschrift";
   $template_content_w = "Variable f&uuml;r Kontent";
   $template_date_w = "Variable f&uuml;r Datum";
-  $template_time_w = "Variable f&uuml;r Zeit"; 
+  $template_time_w = "Variable f&uuml;r Zeit";
   $memo_w = "Memo";
-
-
+  $memo_hinweis_w = "&nbsp;Eigene Notizen zum Ticker<br />&nbsp;(wird im Widget angezeigt).";
 
   $own_ticker_delete_w = "Wollen Sie diesen Ticker-Text loeschen: ID=";
   $own_ticker_startdata_w = "Start-Datum";
@@ -51,6 +58,7 @@
   $tag_w = "Tag";
   $monat_w = "Monat";
   $jahr_w = "Jahr";
+  $heute_w = "Heute";
 
   $ticker_head_w = "Angelegte Ticker";
 
@@ -64,6 +72,7 @@
 
   $speichern_w = "Speichern";
   $abbruch_w = "Abbrechen";
+  $schliessen_w = "Schlie&szlig;en";
 
   $fuﬂnote_w = "Neue Ticker-Module und Updates werden unter <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a> ver&ouml;ffentlicht.";
 

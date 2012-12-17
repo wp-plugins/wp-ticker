@@ -12,6 +12,15 @@
  border: solid 1px #000; /*#D2D2D2;*/
 }
 
+.admintable {
+  width:650px;
+  border-collapse:collapse;
+}
+
+.admintable td {
+  border: none;
+  padding: 3px;
+}
 
 #wptic_datamenu {
   border-top:0px;

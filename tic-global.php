@@ -3,7 +3,6 @@
 $more_tag = " ...[mehr]";  // Anzeige bei gekürztem Text
 $show_length = 200;        // Länge des gekürzten Textes bei Listenanzeige von "eigener Text"
 $max_year = 2020;          // End-Jahr bei Datums-Auswahl in Fancybox
-$random_sort = false;      // Zufällige Anzeige der Einträge, alle Sortierungen werden bei "true" deaktiviert
 $loader = '<img src="'.$wptic_plugin_dir.'/images/loader.gif" border="0" class="loader" id="loader_'.$id.'" \/>';
 
 

@@ -41,11 +41,11 @@ $template = stripslashes($template);
 $code = "\n".'<div class="ticker_content" id="ticker_content_'.$id.'" onmouseover="jTickerEnd'.$type.'('.$id.')" onmouseout="jTickerStart'.$type.'('.$id.')">'."\n";
 
 if($optionen['src']=="db")
-  $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
+  $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random']);
 else if($optionen['src']=="own")
-  $code .= wptic_get_owndata($id);
+  $code .= wptic_get_owndata($id,$optionen['tic_random']);
 else if($optionen['src']=="rss")
-  $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template);
+  $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random']);
 
 
 $tcpr = decode_tcpr($aus);
@@ -61,8 +61,8 @@ $code .= '</div>'."\n".$tcpr.
 
 
 //===== DATEN AUS EIGENEM TEXT ================================
-function wptic_get_owndata($ticker_id) {
-  global $wpdb,$random_sort;
+function wptic_get_owndata($ticker_id,$random_sort=false) {
+  global $wpdb;
 
 
   $heute = date("Y-m-d",time());
@@ -92,8 +92,8 @@ function wptic_get_owndata($ticker_id) {
 
 
 //===== DATEN AUS RSS_FEEDS ====================================
-function wptic_get_rssdata($no_posts, $urls, $maxchar,$template) {
-  global $more_tag,$random_sort;
+function wptic_get_rssdata($no_posts, $urls, $maxchar,$template,$random_sort=false) {
+  global $more_tag;
 
   $url_array = explode("\r\n",$urls);
 
@@ -167,8 +167,8 @@ function wptic_get_rssdata($no_posts, $urls, $maxchar,$template) {
 
 
 //===== DATEN AUS DB ============================================
-function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template) {
-  global $wpdb,$more_tag,$random_sort;
+function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sort=false) {
+  global $wpdb,$more_tag;
 
   if(trim($no_posts)!="")
     $limit = " LIMIT $no_posts";
