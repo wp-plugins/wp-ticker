@@ -22,7 +22,7 @@ Ajax geladen wird. D. h. es ist kein Reload der Seite notwendig, um Aktualisieru
 zu sehen.
 Mit WP-Ticker koennen auch (die meisten) ATOM-Feeds geparst werden.
 
-**Funktionen:**
+= Funktionen: =
 * Datenquelle: Datenbank, eigener Text oder RSS. Bei Datenbank als Quelle kann der Kontent ueber die Auswahl der entspr. Kategorie(n) bestimmt werden.
 * Aussehen kann per CSS angepasst werden (global und/oder individuell fuer alle Ticker).
 * Ein angelegter Ticker kann einfach per Widget in eine Sidebar eingebunden werden.
@@ -62,7 +62,7 @@ FAQ unter [SteGaSoft](http://www.stegasoft.de/index.php/wordpress-plugins/wp-tic
 * Datum und Zeit als Template-Variable eingefuehrt
 
 = Version 1.01 (11.06.2012) =
-* kleine Anpassung für das Modul Tendless
+* kleine Anpassung fuer das Modul Tendless
 
 = Version 1.0 (01/2012) =
 * Kontent wir mit AJAX eingelesen, d. h. Aktualisierungen werden ohne Seiten-Reload angezeigt.
