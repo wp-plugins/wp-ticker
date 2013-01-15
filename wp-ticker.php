@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: WP-Ticker
-Plugin URI: http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/
-Description: Modularer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
-Version: 1.2
+Plugin URI: http://wp-ticker.stegasoft.de
+Description: Modularer, Multisite f&auml;higer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
+Version: 1.3
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
@@ -14,7 +14,7 @@ $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.2";
+$wpticversion = "1.3";
 
 
 
@@ -26,6 +26,19 @@ define('WPTIC_URLPATH', WP_CONTENT_URL.'/plugins/'.plugin_basename( dirname(__FI
 $wptic_plugin_dir = WPTIC_URLPATH;
 
 @include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."tic-global.php");
+
+if (is_multisite()) {
+  if(isset($aus)) {
+    if(is_array($aus))
+      $aus = $aus[$wpdb->prefix];
+    else
+      $aus = false;
+  }
+  else
+    $aus = false;
+
+}
+
 
 $version = get_bloginfo('version');
 
@@ -52,10 +65,13 @@ add_action('admin_head', 'wpticjs2adminhead');
 
 //============= Code für Template-Kopf erzeugen ============================
 function wpticjs2head() {
-  global $wptic_plugin_dir,$wptic_options;
+  global $wptic_plugin_dir,$wptic_options,$wpdb;
 
   $jscript_includes = "\n\n<!-- ***** WP-Ticker ***** -->\n";
-  $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/style.css' type='text/css' />\n";
+  if (!is_multisite())
+    $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/style.css' type='text/css' />\n";
+  else
+    $jscript_includes .= "<link rel='stylesheet' href='$wptic_plugin_dir/styles/".$wpdb->prefix."_style.css' type='text/css' />\n";
   $jscript_includes .= "<script src=\"$wptic_plugin_dir/js/tic-modules.php\" type=\"text/javascript\"></script>\n";
   $jscript_includes .= "<!-- ********************* -->\n\n";
 
@@ -66,6 +82,9 @@ add_action('wp_head', 'wpticjs2head');
 
 function wptic_init() {
   wp_enqueue_script( 'jquery' );
+  if(!session_id())
+    session_start();
+
 
 }
 add_action('init', 'wptic_init');
@@ -187,7 +206,7 @@ function show_wpticker($id) {
 function wptic_get_params($atts) {
   global $wpdb,$wptic_options,$wptic_plugin_dir,$aus,$loader;
 
-  extract(shortcode_atts(array('id'=>1), $atts));
+  extract(shortcode_atts(array('id'=>1,'sort'=>'DESC'), $atts));
 
   //Daten zu Ticker-ID auslesen
   $befehl = "SELECT Optionen,Daten,Template,Typ FROM ".$wpdb->prefix ."wp_ticker WHERE ID=$id";
@@ -283,12 +302,12 @@ function decode_tcpr_wp($do=flase) {
 
 //============= Seite für Plugin-Administration aufbauen ====================
 function wptic_options_page() {
-  global $wpdb,$wptic_plugin_dir,$wpticversion,$max_year,$aus,$wpticversion;
+  global $wpdb,$wptic_plugin_dir,$wpticversion,$max_year,$aus,$wpticversion,$sorting_arr;
 
-  if (defined('WPLANG')) {
-    $lang = WPLANG;
-  }
-  if (empty($lang)) {
+  $lang = get_bloginfo("language");
+  $lang = str_replace("-","_",$lang);
+
+  if (empty($lang) || trim($lang)=="") {
     $lang = 'de_DE';
   }
 
@@ -302,7 +321,7 @@ function wptic_options_page() {
 
   // See if the user has posted us some information
   // If they did, this hidden field will be set to 'Y'
-  if( $_POST[ 'wptic_submit_hidden' ] == "Y" ) {
+  if( $_POST[ 'wptic_submit_hidden' ] == "J" ) {
 
     // Read their posted value
     $wptic_deinstall = $_POST[ 'wptic_deinstall' ];
@@ -311,6 +330,9 @@ function wptic_options_page() {
     $wptic_options["deinstall"] = $wptic_deinstall;
 
     update_option( "wptic_options", $wptic_options );
+
+  }
+  else if( $_POST[ 'wptic_submit_hidden' ] == "Y" ) {
 
 
     //+++ gesendete Daten aufbereiten +++++
@@ -384,7 +406,13 @@ function wptic_options_page() {
   while($datei = readdir($dir)) {
     if (is_file($verzeichnis.$datei) && (substr($datei, -3, 3) == "php")) {
       $ini_data = parse_ini_file($verzeichnis.$datei);
-      $modules .= '<option value="'.$ini_data["name"].'">'.$ini_data["name"].'</option>';
+
+      if (is_multisite() && !$aus) {
+        if($ini_data["name"]=="Roller")
+          $modules .= '<option value="'.$ini_data["name"].'">'.$ini_data["name"].'</option>';
+      }
+      else
+        $modules .= '<option value="'.$ini_data["name"].'">'.$ini_data["name"].'</option>';
       $js_script .= 'ticker_hints[0]["'.$ini_data["name"].'"] = "'.$ini_data["hint"].'";'."\n";
       if($first_modul=="")
         $first_modul = $ini_data["hint"];
@@ -418,10 +446,8 @@ function wptic_options_page() {
       $daten = base64_encode($daten);
     $type = $ticdat->Typ;
 
-    if($optionen['tic_random']=="yes")
-      $tic_random_anz = "<img src='$wptic_plugin_dir/images/checked.png' alt='Random sort' title='Random sort' />";
-    else
-      $tic_random_anz = "&nbsp;";
+
+    $tic_random_anz = array_search($optionen['tic_random'],$sorting_arr[$optionen['src']]);
 
     $ticker_tabelle .= '<tr>'.
                        '<td style="text-align:center;">'.$ticdat->ID.'</td>'.
@@ -434,7 +460,7 @@ function wptic_options_page() {
                         '<input type="button" id="ticdelbtn_'.$ticdat->ID.'" name="ticdelbtn_'.$ticdat->ID.'" value="'.$deletebtn_w.'" onclick="ticker_delete('.$ticdat->ID.')" /> '.
                         '<input type="button" id="ticcodebtn_'.$ticdat->ID.'" name="ticcodetn_'.$ticdat->ID.'" value="'.$codebtn_w.'" onclick="ticker_code('.$ticdat->ID.')"/>'.
                         '<input type="hidden" name="u_src_'.$ticdat->ID.'" value="'.$optionen['src'].'" />'.
-                        '<input type="hidden" name="u_random_'.$ticdat->ID.'" value="'.$optionen['tic_random'].'" />'.
+                        '<input type="hidden" name="u_random_'.$ticdat->ID.'" value="'.$tic_random_anz.'" />'.
                         '<input type="hidden" name="u_data_'.$ticdat->ID.'" value="'.$daten.'" />'.
                         '<input type="hidden" name="u_showtime_'.$ticdat->ID.'" value="'.$optionen['showtime'].'" />'.
                         '<input type="hidden" name="u_intime_'.$ticdat->ID.'" value="'.$optionen['intime'].'" />'.
@@ -446,7 +472,6 @@ function wptic_options_page() {
                         '<input type="hidden" name="u_charcount_'.$ticdat->ID.'" value="'.$optionen['charcount'].'" />'.
                         '<input type="hidden" name="u_template_'.$ticdat->ID.'" value="'.$ticdat->Template.'" />'.
                         '<input type="hidden" name="u_memo_'.$ticdat->ID.'" value="'.$ticdat->Memo.'" />'.
-
                        '</td>'.
                        '</tr>';
   }
@@ -476,8 +501,8 @@ function wptic_options_page() {
 
   ?>
 
-  <form name="form1" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
-  <input type="hidden" name="wptic_submit_hidden" value="Y" />
+  <form name="form0" id="form0" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
+  <input type="hidden" name="wptic_submit_hidden" value="J" />
 
   <table class="admintable">
    <tr><td colspan="2"><h3><?php echo $allgemeines_w; ?>:</h3></td></tr>
@@ -489,6 +514,8 @@ function wptic_options_page() {
    </tr>
    <tr>
     <td colspan="2" style="padding-top:15px;">
+    <input type="submit" name="Submit" value="<?php echo $speichern_w; ?>" style="margin-right:15px;" />
+
     <input type="button" name="wptic_css_editbut" value="<?php echo $edit_css_button_w; ?>" onclick="edit_css()" />
     <?php if(current_user_can('administrator')) { ?>
     <input type="button" name="wptic_modul_importbut" value="<?php echo $import_modul_button_w ; ?>" onclick="import_module()" />
@@ -498,8 +525,12 @@ function wptic_options_page() {
    </tr>
   </table>
 
+  </form>
+
   <hr style="border:dotted 1px #E6E6E6;" />
 
+  <form name="form1" id="form1" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" style="display:none">
+  <input type="hidden" name="wptic_submit_hidden" value="Y" />
   <table class="admintable">
    <tr><td colspan="2"><h3><?php echo $codegenerator_w; ?>:</h3></td></tr>
    <tr><td><b><?php echo $tickerid_w; ?>:</b></td><td><span id="id_span"><?php echo $last_id; ?></span> <input type="hidden" name="wptic_id" value="<?php echo $last_id; ?>" /></td></tr>
@@ -510,9 +541,13 @@ function wptic_options_page() {
      <option value="db"><?php echo $tickersrc_db_w; ?></option>
      <option value="own"><?php echo $tickersrc_own_w; ?></option>
      <option value="rss"><?php echo $tickersrc_rss_w; ?></option>
+     <option value="com"><?php echo $tickersrc_com_w; ?></option>
      </select>
      <?php echo $ticker_random_w; ?>
-     <input type="checkbox" name="wptic_random" id="tic_random" value="yes" />
+     <select name="wptic_random" id="tic_random">
+     <?php echo $tick_sorting; ?>
+     </select>
+     <?php //<input type="checkbox" name="wptic_random" id="tic_random" value="yes" /> ?>
      <div style="padding:0;margin:0;padding-top:5px;" id="data_txt"> <b><?php echo $data_txt_db; ?>:</b></div>
      <div style="padding:0;margin:0;padding-bottom:20px;" id="data_context"> <?php echo $cat_items; ?></div>
     </td>
@@ -537,7 +572,7 @@ function wptic_options_page() {
    <tr>
     <td><b><?php echo $tickertype_w; ?>:</b></td>
     <td>
-     <select name="wptic_type" size="1" style="width:110px;" onchange="change_modules(this)">
+     <select name="wptic_type" id="wptic_type" size="1" style="width:110px;" onchange="change_modules(this)">
      <?php echo $modules; ?>
      </select>
      <span id="hint_box"><?php echo $first_modul; ?></span>
@@ -546,43 +581,99 @@ function wptic_options_page() {
    <tr><td><b><?php echo $tickermaxitems_w; ?>:</b></td><td> <input type="text" name="wptic_itemcount" value="5" style="width:60px;" /> (<?php echo $tickermaxitems_info_w; ?>)</td></tr>
    <tr><td><b><?php echo $tickermaxchars_w; ?>:</b></td><td> <input type="text" name="wptic_charcount" value="70" style="width:60px;" /> (<?php echo $tickermaxchars_info_w; ?>)</td></tr>
 
-   <tr><td style="vertical-align: top;"><b><?php echo $template_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_template" style="width:250px;height:80px;float:left;"><?php echo $template; ?></textarea>&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?></td></tr>
-   <tr><td style="vertical-align: top;"><b><?php echo $memo_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_memo" style="width:250px;height:80px;float:left;"></textarea><?php echo $memo_hinweis_w; ?></td></tr>
+   <tr><td style="vertical-align: top;"><b><?php echo $template_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_template" id="wptic_template" style="float:left;"><?php echo $template; ?></textarea><span id="var_masks">&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?></span></td></tr>
+   <tr><td style="vertical-align: top;"><b><?php echo $memo_w; ?>:</b></td><td style="vertical-align: top;"><textarea name="wptic_memo" id="wptic_memo" style="float:left;"></textarea><?php echo $memo_hinweis_w; ?></td></tr>
 
   </table>
 
   <p class="submit">
   <input type="submit" name="Submit" value="<?php echo $speichern_w; ?>" />
+  <input type="button" name="abbruch" value="<?php echo $abbruch_w; ?>" onclick="show_hide_ticker_admin('')" />
   </p>
   <input type="hidden" name="wptic_aktion" value="insert" />
   </form>
 
-  <hr />
 
+  <form name="tictableform" id="tictableform" action="#" style="margin-top:30px;">
+  <div style="margin-bottom:10px;"><h3 style="display:inline;"><?php echo $ticker_head_w; ?></h3><a href="javascript:return false;" onclick="show_hide_ticker_admin('neu')" style="margin-left:10px;"><?php echo $ticker_head_neu_w; ?></a></div>
 
-  <div style="margin-bottom:10px;"><b><?php echo $ticker_head_w; ?></b></div>
-  <form name="tictableform" action="#">
   <?php echo $ticker_tabelle; ?>
   </form>
   <br />
   <hr />
 
+  <?php if(is_multisite()) { ?>
+    <h3 style="display:inline;"><?php echo $hinweis_w; ?>:</h3><br />
+    <b>MU-Prefix:</b> <input type="text" value="<?php echo $wpdb->prefix; ?>" /><br />
 
+
+  <hr />
+  <?php } ?>
   <br />
-  <?php echo $fußnote_w; ?>
+  <div style="margin-right:5px;float:left;"><?php echo $fußnote_w; ?></div><a href="https://twitter.com/SteGaSoft" target="_blank" style="text-decoration:none;"><img src="<?php echo $wptic_plugin_dir."/images/twitter-icon.png"; ?>" style="width:18px;height:18px;" alt="SteGaSoft Twitter" title="SteGaSoft Twitter" /></a>
+  <div style="clear:left">&nbsp;</div>
+  <div style="margin:7px 5px 0 0;float:left;"><?php echo $spende_w; ?></div><?php echo $spenden_button; ?>
+  <div style="clear:left">&nbsp;</div>
 
 
   </div>
 
   <script type="text/javascript">
 
+
   //===== CSS edit funktionen =====
   function edit_css() {
 
    <?php
     $write_msg = "";
-    if (!is_writable(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css"))
-      $write_msg = $edit_css_permission;
+    if (is_multisite()) {
+      if(file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR ."styles/".$wpdb->prefix."_style.css")) {
+        if (!is_writable(dirname(__FILE__) . DIRECTORY_SEPARATOR ."styles/".$wpdb->prefix."_style.css")) {
+          $write_msg = str_replace("%datei%",$wpdb->prefix."_style.css",$edit_css_permission);
+
+          /*
+          if(confirm("<?php echo str_replace("%datei%",$wpdb->prefix."_style.css",$css_chmod_frage); ?>")) {
+            jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "chomd_css", content: "<?php echo $wpdb->prefix."_style.css"; ?>", cert: "<?php echo session_id(); ?>"}, function(data) {
+               alert(data);
+             });
+
+          }
+          */
+        }
+      }
+      else if(file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR ."styles/")) {
+        if (!is_writable(dirname(__FILE__) . DIRECTORY_SEPARATOR ."styles/")) {
+          $write_msg = $edit_css_dir_permission;
+
+          /*
+          if(confirm("<?php echo str_replace("%datei%","styles",$css_chmod_frage); ?>")) {
+            jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "chomd_css", content: "styles", cert: "<?php echo session_id(); ?>"}, function(data) {
+               alert(data);
+             });
+
+          }
+          */
+
+        }
+      }
+    }
+    else {
+      if (!is_writable(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css")) {
+        $write_msg = str_replace("%datei%","style.css",$edit_css_permission);
+
+        /*
+        if(confirm("<?php echo str_replace("%datei%","style.css",$css_chmod_frage); ?>")) {
+          jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "chomd_css", content: "style.css", cert: "<?php echo session_id(); ?>"}, function(data) {
+             alert(data);
+           });
+
+        }
+        */
+
+      }
+
+    }
+
 
    ?>
 
@@ -605,7 +696,7 @@ function wptic_options_page() {
                 }
     );
 
-   jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "get_css"}, function(data) {
+   jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "get_css", cert: "<?php echo session_id(); ?>"}, function(data) {
         jQuery('#css_content').html(data);
    });
 
@@ -613,7 +704,7 @@ function wptic_options_page() {
   }
 
   function save_css() {
-    jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "save_css",content: jQuery("#css_edit_content").val()}, function(data) {
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "save_css",content: jQuery("#css_edit_content").val(), cert: "<?php echo session_id(); ?>"}, function(data) {
         jQuery('#css_content').html(data);
    });
 
@@ -622,7 +713,7 @@ function wptic_options_page() {
   //===== Modul-Import =====
   function import_module() {
     var fancy_code = "<b><?php echo $import_modul_texthinweis; ?>:<\/b><br />"+
-                     "<iframe src='<?php echo plugins_url() ."/wp-ticker/tic-functions.php?aktion=get_modulform"; ?>' id='modulframe' style='border:none;'><\/iframe>";
+                     "<iframe src='<?php echo plugins_url() ."/wp-ticker/tic-functions.php?aktion=get_modulform?cert=".session_id(); ?>' id='modulframe' style='border:none;'><\/iframe>";
 
     jQuery.fancybox(
                 fancy_code,
@@ -642,21 +733,28 @@ function wptic_options_page() {
 
   //===== ticker edit funktion =====
   function ticker_edit(id) {
+
     document.form1.wptic_aktion.value="update";
     document.form1.wptic_id.value=id;
     document.getElementById('id_span').innerHTML=id;
 
     var u_src = "u_src_"+id;
+
     if(document.forms["tictableform"].elements[u_src].value=="db") {
       document.form1.wptic_src.selectedIndex = 0;
       document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_db; ?>:';
       document.getElementById('data_context').innerHTML ='<?php echo $cat_items; ?>';
 
       var data = document.forms["tictableform"].elements["u_data_"+id].value;
-      var cat_arr = data.split(",");
-      for (var i=0;i<cat_arr.length;i++) {
-          document.form1.elements["wptic_cat["+cat_arr[i]+"]"].checked = true;
+      if(data!="") {
+        var cat_arr = data.split(",");
+        for (var i=0;i<cat_arr.length;i++) {
+            document.form1.elements["wptic_cat["+cat_arr[i]+"]"].checked = true;
+        }
       }
+
+      document.getElementById('var_masks').innerHTML = '&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?>';
+
     }
 
 
@@ -668,12 +766,12 @@ function wptic_options_page() {
                                                           '<div id="wptic_datamenu" class="wptic_data_basic">'+
                                                            '<input type="button" value="<?php echo $own_ticker_neu_w; ?>" onclick="insert_own_tictext('+id+')" style="margin:4px 4px 4px 4px;" />'+
                                                           '<\/div>';
-      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: id}, function(data) {
+      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: id, aktion: "get_tickers", cert:"<?php echo session_id(); ?>"}, function(data) {
         jQuery('#wptic_data').html(data);
       });
+      document.getElementById('var_masks').innerHTML = '';
 
     }
-
 
     if(document.forms["tictableform"].elements[u_src].value=="rss") {
       document.form1.wptic_src.selectedIndex = 2;
@@ -684,13 +782,18 @@ function wptic_options_page() {
       u_daten = str_replace("[br]", "\r", u_daten);
       u_daten = str_replace("[bn]", "\n", u_daten);
       document.form1.wptic_data.value = u_daten;
+      document.getElementById('var_masks').innerHTML = '&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?>';
 
     }
 
-    if(document.forms["tictableform"].elements["u_random_"+id].value=="yes")
-      document.form1.wptic_random.checked=true;
-    else
-      document.form1.wptic_random.checked=false;
+    if(document.forms["tictableform"].elements[u_src].value=="com") {
+      document.form1.wptic_src.selectedIndex = 3;
+      document.getElementById('data_txt').innerHTML ='';
+      document.getElementById('data_context').innerHTML = '';
+      document.getElementById('var_masks').innerHTML = '&nbsp;%author_url% - <?php echo $template_author_url_w; ?><br />&nbsp;%author% - &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_author_w; ?><br />&nbsp;%date% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_date_w; ?><br />&nbsp;%time% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_time_w; ?><br />&nbsp;%post% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_post_w; ?><br />&nbsp;%content% - &nbsp; &nbsp; &nbsp; <?php echo $template_comment_w; ?><br />&nbsp;%avatar% - &nbsp; &nbsp; &nbsp; &nbsp; Avatar';
+    }
+
+    show_hide_ticker_admin(document.forms["tictableform"].elements["u_random_"+id].value);
 
     document.form1.wptic_showtime.value = document.forms["tictableform"].elements["u_showtime_"+id].value;
     document.form1.wptic_intime.value = document.forms["tictableform"].elements["u_intime_"+id].value;
@@ -731,9 +834,14 @@ function wptic_options_page() {
 
 
   function change_data_box(obj) {
+
+    add_sorting_option("");
+
     switch(obj.value) {
          case "db": document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_db; ?>:';
                     document.getElementById('data_context').innerHTML ='<?php echo $cat_items; ?>';
+                    document.getElementById('var_masks').innerHTML = '&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?>';
+                    document.getElementById('wptic_template').value = "%tic_date%<br />\n%tic_title%<br />\n%tic_content%";
                     break;
          case "own": document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_own; ?>:';
                      document.getElementById('data_context').innerHTML = '<div id="wptic_data" class="wptic_data_basic"><\/div>'+
@@ -741,15 +849,26 @@ function wptic_options_page() {
                                                                           '<input type="button" value="<?php echo $own_ticker_neu_w; ?>" onclick="insert_own_tictext(<?php echo $last_id; ?>)" style="margin:4px 4px 4px 4px;" />'+
                                                                          '<\/div>';
 
-                     jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: <?php echo $last_id; ?>}, function(data) {
+                     jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: <?php echo $last_id; ?>, aktion: "get_tickers", cert:"<?php echo session_id(); ?>"}, function(data) {
                        jQuery('#wptic_data').html(data);
                      });
+                     document.getElementById('var_masks').innerHTML = '';
+                     document.getElementById('wptic_template').value = "";
                      break;
          case "rss": document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_rss; ?>:';
                      document.getElementById('data_context').innerHTML = '<textarea name="wptic_data" style="width:400px;height:170px;"><\/textarea>';
+                     document.getElementById('var_masks').innerHTML = '&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?>';
+                     document.getElementById('wptic_template').value = "%tic_date%<br />\n%tic_title%<br />\n%tic_content%";
+                     break;
+         case "com": document.getElementById('data_txt').innerHTML ='';
+                     document.getElementById('data_context').innerHTML = '';
+                     document.getElementById('var_masks').innerHTML = '&nbsp;%author_url% - <?php echo $template_author_url_w; ?><br />&nbsp;%author% - &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_author_w; ?><br />&nbsp;%date% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_date_w; ?><br />&nbsp;%time% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_time_w; ?><br />&nbsp;%post% - &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<?php echo $template_com_post_w; ?><br />&nbsp;%content% - &nbsp; &nbsp; &nbsp;<?php echo $template_comment_w; ?><br />&nbsp;%avatar% - &nbsp; &nbsp; &nbsp; &nbsp; Avatar';
+                     document.getElementById('wptic_template').value = "%author% am %date% um %time%<br />\n%content%";
                      break;
          default: document.getElementById('data_txt').innerHTML ='<?php echo $data_txt_cat; ?>:';
                   document.getElementById('data_context').innerHTML = '<?php echo $cat_items; ?>';
+                  document.getElementById('var_masks').innerHTML = '';
+                  document.getElementById('wptic_template').value = "";
                   break;
     }
   }
@@ -841,7 +960,8 @@ function wptic_options_page() {
                                                                                    content: input_data[0],
                                                                                    startdate: input_data[1],
                                                                                    enddate: input_data[2],
-                                                                                   autodelete: input_data[3]
+                                                                                   autodelete: input_data[3],
+                                                                                   cert: "<?php echo session_id(); ?>"
                                                                                   },
                                                                                   function(data) {
                                                                                     jQuery('#wptic_data').html(data);
@@ -882,7 +1002,7 @@ function wptic_options_page() {
   }
 
   function edit_own_tictext(ed_id,tic_id) {
-    jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "edit", aktion_id: ed_id}, function(data) {
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "edit", aktion_id: ed_id, cert: "<?php echo session_id(); ?>"}, function(data) {
       jQuery.fancybox(
                 data,
                 {
@@ -900,6 +1020,7 @@ function wptic_options_page() {
 
 
   function update_own_tictext(ed_id,tic_id) {
+
     var input_data = new Array()
         input_data[0] = jQuery("#tickertext").val();
         input_data[1] = jQuery("#startdate_j").val() + "-" + jQuery("#startdate_m").val() + "-" + jQuery("#startdate_d").val();
@@ -918,7 +1039,8 @@ function wptic_options_page() {
                                                                                    startdate: input_data[1],
                                                                                    enddate: input_data[2],
                                                                                    autodelete: input_data[3],
-                                                                                   aktion_id: ed_id
+                                                                                   aktion_id: ed_id,
+                                                                                   cert: "<?php echo session_id(); ?>"
                                                                                   },
                                                                                   function(data) {
                                                                                     jQuery('#wptic_data').html(data);
@@ -930,10 +1052,72 @@ function wptic_options_page() {
 
   function delete_own_tictext(del_id,tic_id) {
     if(confirm("<?php echo $own_ticker_delete_w; ?>"+del_id+"?")) {
-      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "delete", aktion_id: del_id}, function(data) {
+      jQuery.post("<?php echo plugins_url() ."/wp-ticker/get_own_content.php"; ?>",{ticker_id: tic_id,aktion: "delete", aktion_id: del_id, cert: "<?php echo session_id(); ?>"}, function(data) {
         jQuery('#wptic_data').html(data);
       });
     }
+  }
+
+
+  function show_hide_ticker_admin(selektion) {
+    jQuery("#form1").toggle();
+    jQuery("#tictableform").toggle();
+
+    if(selektion!="neu") {
+      if (jQuery("#form1").is(':visible'))
+        add_sorting_option(selektion);
+    }
+    else {
+      set_new_ticker_params(<?php echo $last_id; ?>);
+    }
+  }
+
+
+  function add_sorting_option(selektion) {
+    var pre = "";
+
+    if(selektion=="")
+      pre = "<?php echo $tic_random_anz; ?>";
+    else
+      pre = selektion;
+
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "get_sortoptions",content: pre+"-"+jQuery('#wptic_src').val(), cert: "<?php echo session_id(); ?>"}, function(data) {
+        jQuery('#tic_random').html(data);
+    });
+
+  }
+
+
+  function set_new_ticker_params(neu_id) {
+    document.form1.wptic_aktion.value="insert";
+
+    document.form1.wptic_id.value=neu_id;
+    document.getElementById('id_span').innerHTML=neu_id;
+
+    jQuery("#wptic_src :selected").removeAttr("selected");
+    jQuery.post("<?php echo plugins_url() ."/wp-ticker/tic-functions.php"; ?>",{aktion: "get_sortoptions",content: "-db", cert: "<?php echo session_id(); ?>"}, function(data) {
+        jQuery('#tic_random').html(data);
+    });
+
+    jQuery("#data_txt").html('<?php echo $data_txt_db; ?>:');
+    jQuery("#data_context").html('<?php echo $cat_items; ?>');
+
+    document.form1.wptic_showtime.value = "3000";
+    document.form1.wptic_intime.value = "1000";
+    document.form1.wptic_outtime.value = "1000";
+    document.form1.wptic_reloadtime.value = "0";
+    document.form1.wptic_reloadpausetime.value = "0";
+
+    jQuery("#wptic_type :selected").removeAttr("selected");
+
+    document.form1.wptic_itemcount.value = "5";
+    document.form1.wptic_charcount.value = "70";
+
+    jQuery("#wptic_template").val("%tic_date%<br />\n%tic_title%<br />\n%tic_content%");
+    jQuery("#var_masks").html('&nbsp;%tic_date% - &nbsp; &nbsp; &nbsp;<?php echo $template_date_w; ?><br />&nbsp;%tic_time% - &nbsp; &nbsp; &nbsp;<?php echo $template_time_w; ?><br />&nbsp;%tic_title% - &nbsp; &nbsp; &nbsp; <?php echo $template_head_w; ?><br />&nbsp;%tic_content% - <?php echo $template_content_w; ?>');
+
+    jQuery("#wptic_memo").val("");
+
   }
 
 

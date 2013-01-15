@@ -161,10 +161,11 @@ add_action('widgets_init', 'wp_tickerwid_init');
 
 function get_widget_txt($txtitem) {
 
-  if (defined('WPLANG')) {
-    $lang = WPLANG;
-  }
-  if (empty($lang)) {
+  $lang = get_bloginfo("language");
+  $lang = str_replace("-","_",$lang);
+
+
+  if (empty($lang) || trim($lang)=="") {
     $lang = 'de_DE';
   }
 

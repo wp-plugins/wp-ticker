@@ -8,6 +8,15 @@
 }
 
 
+.avatar {
+  float:left;
+  margin-right: 5px;
+}
+
+.tic_owntext_item {
+  margin-bottom:20px;
+}
+
 .loader {
   margin:40px 0 0 40px;
 }

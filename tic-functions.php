@@ -1,15 +1,20 @@
 <?php
-
 @include_once (dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR. "wp-config.php");
 @include_once (dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR."wp-includes/wp-db.php");
+@include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."tic-global.php");
 
 define('WPTIC_URLPATH', WP_CONTENT_URL.'/plugins/'.plugin_basename( dirname(__FILE__)) );
 
+if(!session_id())
+  session_start();
 
-if (defined('WPLANG')) {
-  $lang = WPLANG;
-}
-if (empty($lang)) {
+
+
+
+$lang = get_bloginfo("language");
+$lang = str_replace("-","_",$lang);
+
+if (empty($lang) || trim($lang)=="") {
   $lang = 'de_DE';
 }
 
@@ -19,14 +24,39 @@ if(!@include_once "lang/".$lang.".php")
 
 $aktion = $_POST['aktion'];
 $content = $_POST['content'];
-
+$cert = $_POST['cert'];
 
 if(!isset($_POST['aktion']))
   $aktion = $_GET['aktion'];
 
 //===== CSS bearbeiten ===============================
 if($aktion=="get_css") {
-  $css_content = file(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css");
+  if($use_session) {
+    if($cert!=session_id()) {
+      echo "<script type='text/javascript'>alert('SESS-ERROR');close_fancy();</script>";
+      exit();
+    }
+  }
+
+
+  if (!is_multisite()) {
+    $css_content = file(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css");
+  }
+  else {
+     if(!file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR."styles/".$wpdb->prefix."_style.css")) {
+       $css_content = file(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css");
+       $css_content = implode("",$css_content);
+       $fp = fopen(dirname(__FILE__) . DIRECTORY_SEPARATOR."styles/".$wpdb->prefix."_style.css","w+");
+       fwrite($fp, $css_content);
+       fclose($fp);
+       $css_content = file(dirname(__FILE__) . DIRECTORY_SEPARATOR."styles/".$wpdb->prefix."_style.css");
+     }
+     else {
+       $css_content = file(dirname(__FILE__) . DIRECTORY_SEPARATOR."styles/".$wpdb->prefix."_style.css");
+     }
+
+
+  }
   $css_content = implode("",$css_content);
   echo  "<textarea id='css_edit_content' style='width:590px; height:600px;'>$css_content</textarea>";
   exit();
@@ -34,7 +64,17 @@ if($aktion=="get_css") {
 
 
 if($aktion=="save_css") {
-  $fp = fopen(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css","w+");
+  if($use_session) {
+    if($cert!=session_id()) {
+      echo "<script type='text/javascript'>alert('SESS-ERROR');close_fancy();</script>";
+      exit();
+    }
+  }
+
+  if (!is_multisite())
+    $fp = fopen(dirname(__FILE__) . DIRECTORY_SEPARATOR ."style.css","w+");
+  else
+    $fp = fopen(dirname(__FILE__) . DIRECTORY_SEPARATOR."styles/".$wpdb->prefix."_style.css","w+");
   fwrite($fp, $content);
   fclose($fp);
   echo "<script type='text/javascript'>close_fancy();</script>";
@@ -42,8 +82,25 @@ if($aktion=="save_css") {
 }
 
 
+if($aktion=="chomd_css") {
+  if(chmod (dirname(__FILE__) . DIRECTORY_SEPARATOR .$content , 0777 ))
+    echo "$content $css_chmod_permission";
+  else
+    echo $css_chmod_permission_err;
+
+}
+
+
+
 //===== Modul Upload ===============================
 if($aktion=="get_modulform") {
+
+  if($use_session) {
+    if($cert!=session_id()) {
+      echo "<script type='text/javascript'>alert('SESS-ERROR');close_fancy();</script>";
+      exit();
+    }
+  }
 
   echo "<!doctype html>\n<html>\n<head>\n<title>Modul-Formular</title>\n</head>\n<body style='font-family:Arial;font-size:10pt;'>\n";
 
@@ -79,6 +136,24 @@ if($aktion=="upload" && current_user_can('administrator') ) {
 }
 
 
+
+
+//===== Sortier-Optionen bereitstellen ===============================
+if($aktion=="get_sortoptions") {
+  $content = explode("-",$content);
+
+  $sort_options = $sorting_arr[$content[1]];
+
+  foreach($sort_options as $sort_option) {
+    $anzeige = array_search($sort_option,$sort_options);
+    if ($content[0]==$anzeige)
+      echo '<option value="'.$sort_option.'" selected>'.$anzeige.'</option>';
+    else
+      echo '<option value="'.$sort_option.'">'.$anzeige.'</option>';
+  }
+
+
+}
 
 
 ?>

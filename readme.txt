@@ -1,13 +1,13 @@
 === WP-Ticker ===
 Contributors: Stephan Gaertner
-Donate link: http://www.stegasoft.de
-Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom
+Donate link: http://wp-ticker.stegasoft.de
+Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
 Tested up to: 3.5
-Stable tag: 1.2
+Stable tag: 1.3
 
 
-Auf jQuery basierender (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann.
+Auf jQuery basierender, Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann.
 
 == Description ==
 
@@ -16,19 +16,18 @@ D. h. es koennen mehrere Ticker auf einer Seite/in einem Artikel oder z.B. in de
 und in einer Seite bzw. einem Artikel dargestellt werden.
 Alle Ticker werden ueber eine zentrale Style-Datei formatiert (Groesse, Aussehen, etc.).
 Die Text-Effekte koennen modular erweitert werden. Neue Module und Updates werden unter
-[SteGaSoft](http://www.stegasoft.de/wordpress-plugin-wp-ticker/) veroeffentlicht.
-Ab Version 1.0 kann WP-Ticker auch als Live-Ticker genutzt werden, da der Inhalt per
-Ajax geladen wird. D. h. es ist kein Reload der Seite notwendig, um Aktualisierungen
-zu sehen.
+[WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/) veroeffentlicht.
+WP-Ticker kann auch als Live-Ticker genutzt werden, da der Inhalt per Ajax geladen wird.
+D. h. es ist kein Reload der Seite notwendig, um Aktualisierungen zu sehen.
 Mit WP-Ticker koennen auch (die meisten) ATOM-Feeds geparst werden.
 
 = Funktionen: =
-* Datenquelle: Datenbank, eigener Text oder RSS. Bei Datenbank als Quelle kann der Kontent ueber die Auswahl der entspr. Kategorie(n) bestimmt werden.
+* Datenquelle: Datenbank, eigener Text, RSS oder Kommentare. Bei Datenbank als Quelle kann der Kontent ueber die Auswahl der entspr. Kategorie(n) bestimmt werden.
 * Aussehen kann per CSS angepasst werden (global und/oder individuell fuer alle Ticker).
 * Ein angelegter Ticker kann einfach per Widget in eine Sidebar eingebunden werden.
 * Angabe von Start- / Enddatum fuer Anzeigezeitraum bei eigenem Text moeglich (inkl. autom. Loeschfunktion).
 * Live-Ticker-Einsatz durch Angabe eines Reload-Intervalls moeglich.
-* zufaellige Sortierung des Kontents individuell fuer jeden Ticker moeglich
+* Sortierung (inkl. Zufall) des Kontents individuell fuer jeden Ticker moeglich
 
 == Installation ==
 Entpacken Sie die ZIP-Datei und laden Sie den Ordner wp-ticker in das
@@ -41,13 +40,27 @@ nun aktivieren. Sie finden dort auch den Untermenuepunkt "WP-Ticker".
 Durch Klick auf diesen Link gelangen Sie zur Administration des
 Plugins.
 
+Bei Nutzung im Multisite-Betrieb bitte beachten:
+Das Plugin ueber das Netzwerk installieren aber nicht(!) fuer
+alle Netzwerke aktivieren!
+Das Plugin fuer jeden Blog separat aktivieren!
+
+Bitte stellen Sie noch sicher, dass die Datei "style.css" und das Verzeichnis "/styles/"
+Schreibrechte besitzen.
+
 
 == Frequently Asked Questions ==
-FAQ unter [SteGaSoft](http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/wp-ticker-faq/)
+FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 
 
 
 == Changelog ==
+= Version 1.3 (15.01.2013) =
+* Backend wurde uebersichtlicher gestaltet
+* erweiterte Sortier-Moeglichkeiten
+* auch Kommentare als Datenquelle moeglich
+* fuer Multisite-Betrieb angepasst
+
 = Version 1.2 (17.12.2012) =
 * bei eigenem Text kann ueber Button das aktuelle Datum direkt eingestellt werden
 * die CSS-Datei fuer Ticker kann direkt ueber die Adminseite editiert werden
@@ -95,7 +108,7 @@ FAQ unter [SteGaSoft](http://www.stegasoft.de/index.php/wordpress-plugins/wp-tic
 Zur Zeit keine Angaben.
 
 == Screenshots ==
-Screenshots unter [SteGaSoft](http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/wp-ticker-screenshots/)
+Screenshots unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/screenshots/)
 
 
 == Other Notes ==
@@ -103,10 +116,10 @@ Screenshots unter [SteGaSoft](http://www.stegasoft.de/index.php/wordpress-plugin
 = Copyright =
 Wordpress - Plugin "WP-Ticker"
 (c) 2010-2012 by SteGaSoft, Stephan Gaertner
-Www: <http://www.stegasoft.de>
+Www: <http://wp-ticker.stegasoft.de>
 eMail: s. website
 Der Copyright-Hinweis muss sichtbar am Ticker erhalten bleiben!
-Weitere Infos dazu finden Sie unter <http://www.stegasoft.de/wordpress-plugin-wp-ticker/>
+Weitere Infos dazu finden Sie unter <http://wp-ticker.stegasoft.de/>
 im Abschnitt "Lizenz".
 
 
@@ -144,7 +157,7 @@ Reaload-Pause: Anzeige-Dauer in Sekunden des Reload-Textes bzw. Bildes  (0 oder 
 
 Tickertyp:
 Hier koennen Sie den Anzeigetyp des Tickers auswaehlen. Je nach eingebundenen Modulen wird die Auswahlliste
-angepasst. Neue Module und Updates werden unter www.stegasoft.de veroeffentlicht.
+angepasst. Neue Module und Updates werden unter wp-ticker.stegasoft.de veroeffentlicht.
 
 Max. Eintraege:
 Hier koennen Sie angeben, wieviele Eintraege aus jeweils einer Kategorie oder eines Feeds angezeigt

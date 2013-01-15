@@ -5,7 +5,11 @@
   $deinstall_hinweis_w = "l&ouml;scht nach Deaktivierung alle zum Plugin geh&ouml;renden Einstellungen";
   $edit_css_button_w = "CSS bearbeiten";
   $edit_css_texthinweis = "Hier k&ouml;nnen Sie das Layout der Ticker bearbeiten";
-  $edit_css_permission = "<b>Bitte pr&uuml;fen Sie die Dateirechte von <em>style.css</em></b>";
+  $edit_css_permission = "<b>Bitte pr&uuml;fen Sie die Dateirechte von <em>%datei%</em></b>";
+  $edit_css_dir_permission = "<b>Bitte pr&uuml;fen Sie die Dateirechte des Verzeichnisses <em>/styles/</em></b>";
+  $css_chmod_frage = "Soll WP-Ticker versuchen, die Schreibrechte von %datei% zu aendern?";
+  $css_chmod_permission = "sollte nun scheibar sein";
+  $css_chmod_permission_err = "Schreibrechte konnten nicht geaendert werden. Bitte aendern Sie die Schreibrechte selber per FTP.";
   $import_modul_button_w = "Modul importieren";
   $import_modul_texthinweis = "Modul ausw&auml;hlen";
   $import_modul_upload_ok = "Module-Upload <span style='color:#008000;'>OK</span>";
@@ -18,6 +22,7 @@
   $tickersrc_db_w = "Datenbank";
   $tickersrc_own_w = "eigener Text";
   $tickersrc_rss_w = "RSS-Feed";
+  $tickersrc_com_w = "Kommentare";
   $duration_w = "Dauer f&uuml;r";
   $tickershowtime_w = "Anzeige";
   $tickershowtime_info_w = "ms";
@@ -25,9 +30,9 @@
   $tickerintime_info_w = "ms";
   $tickerouttime_w = "Ausblendung";
   $tickerouttime_info_w = "ms";
-  $ticker_random_w = "zuf&auml;llige Sortierung";
+  $ticker_random_w = "Sortieren nach";
 
-  $tickerreloadtime_w = "Reaload-Intervall";
+  $tickerreloadtime_w = "Reload-Intervall";
   $tickerreloadtime_info_w = "Min. (0 oder leer: kein auto. Reload)";
   $tickerreloadpausetime_w = "Reload-Pause";
   $tickerreloadpausetime_info_w = "s (0 oder leer: keine Pause)";
@@ -45,6 +50,13 @@
   $template_content_w = "Variable f&uuml;r Kontent";
   $template_date_w = "Variable f&uuml;r Datum";
   $template_time_w = "Variable f&uuml;r Zeit";
+  $template_author_url_w = "Kommentator-URL";
+  $template_author_w = "Name des Kommentators";
+  $template_com_date_w = "Kommentar-Datum";
+  $template_com_time_w = "Kommentar-Zeit";
+  $template_com_post_w = "Link zu Kommentar";
+  $template_comment_w = "Kommentar";
+
   $memo_w = "Memo";
   $memo_hinweis_w = "&nbsp;Eigene Notizen zum Ticker<br />&nbsp;(wird im Widget angezeigt).";
 
@@ -61,6 +73,7 @@
   $heute_w = "Heute";
 
   $ticker_head_w = "Angelegte Ticker";
+  $ticker_head_neu_w = "Neuen Ticker anlegen";
 
   $editbtn_w = "Bearbeiten";
   $deletebtn_w = "L&ouml;schen";
@@ -74,7 +87,9 @@
   $abbruch_w = "Abbrechen";
   $schliessen_w = "Schlie&szlig;en";
 
-  $fuﬂnote_w = "Neue Ticker-Module und Updates werden unter <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a> ver&ouml;ffentlicht.";
-
+  $hinweis_w = "Hinweise";
+  $fuﬂnote_w = "Neue Ticker-Module und Updates werden unter <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a> ver&ouml;ffentlicht. Oder folge auf";
+  $spende_w = "Ich freue mich immer &uuml;ber";
+  $spenden_button = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"><input type="hidden" name="cmd" value="_s-xclick" /><input type="hidden" name="hosted_button_id" value="ZQ3UV6DUTT56S" /><input type="image" alt="Spende per Paypal" name="submit" src="https://www.paypal.com/de_DE/DE/i/btn/btn_donate_SM.gif" /><img alt="Pixel in WP-Ticker" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" border="0" /></form>';
 
 ?>

@@ -13,7 +13,10 @@ while($datei = readdir($dir)) {
       $teilcode = base64_decode($ini_data["code"]);
     else
       $teilcode = $ini_data["code"];
-    $code .= stripslashes($teilcode)."\n";
+
+    $teilcode = stripslashes($teilcode);
+    $code .= str_replace("|","\\",$teilcode)."\n";
+    //$code .= stripslashes($teilcode)."\n";
   }
 }
 echo $code;

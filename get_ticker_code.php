@@ -7,10 +7,11 @@
 define('WPTIC_URLPATH', WP_CONTENT_URL.'/plugins/'.plugin_basename( dirname(__FILE__)) );
 $wptic_plugin_dir = WPTIC_URLPATH;
 
-if (defined('WPLANG')) {
-  $lang = WPLANG;
-}
-if (empty($lang)) {
+
+$lang = get_bloginfo("language");
+$lang = str_replace("-","_",$lang);
+
+if (empty($lang) || trim($lang)=="") {
   $lang = 'en_EN';
 }
 
@@ -41,12 +42,13 @@ $template = stripslashes($template);
 $code = "\n".'<div class="ticker_content" id="ticker_content_'.$id.'" onmouseover="jTickerEnd'.$type.'('.$id.')" onmouseout="jTickerStart'.$type.'('.$id.')">'."\n";
 
 if($optionen['src']=="db")
-  $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random']);
+  $code .= wptic_get_dbdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random'],$id);
 else if($optionen['src']=="own")
   $code .= wptic_get_owndata($id,$optionen['tic_random']);
 else if($optionen['src']=="rss")
-  $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random']);
-
+  $code .= wptic_get_rssdata($optionen['itemcount'],$daten,$optionen['charcount'],$template,$optionen['tic_random'],$id);
+else if($optionen['src']=="com")
+  $code .= wptic_get_coments($optionen['itemcount'],$optionen['charcount'],$optionen['tic_random'],$id);
 
 $tcpr = decode_tcpr($aus);
 
@@ -61,7 +63,7 @@ $code .= '</div>'."\n".$tcpr.
 
 
 //===== DATEN AUS EIGENEM TEXT ================================
-function wptic_get_owndata($ticker_id,$random_sort=false) {
+function wptic_get_owndata($ticker_id,$random_sort='ID ASC') {
   global $wpdb;
 
 
@@ -69,8 +71,10 @@ function wptic_get_owndata($ticker_id,$random_sort=false) {
 
   $zusatz = "";
 
-  if($random_sort)
-    $zusatz .= " ORDER BY RAND()";
+  if(trim($random_sort)=="")
+    $zusatz = " ORDER BY ID ASC";
+  else
+    $zusatz = " ORDER BY $random_sort";
 
   $befehl = "SELECT ID,Ticker_ID,Daten,Zeige_Start,Zeige_Ende,Auto_Delete FROM ".$wpdb->prefix ."wp_ticker_content WHERE Ticker_ID=$ticker_id AND Zeige_Start<='$heute' AND (Zeige_Ende>'$heute' OR Zeige_Ende='0000-00-00')".$zusatz;
   $ticdaten = $wpdb->get_results($befehl);
@@ -79,9 +83,9 @@ function wptic_get_owndata($ticker_id,$random_sort=false) {
   $k=0;
   foreach ($ticdaten as $ticdat) {
     if($k==0)
-      $anfang = '<div>';
+      $anfang = '<div class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
     else
-      $anfang = '<div style="display:none;">';
+      $anfang = '<div style="display:none;" class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
     $output .= $anfang.stripslashes($ticdat->Daten).'</div>';
     $k++;
   }
@@ -92,7 +96,7 @@ function wptic_get_owndata($ticker_id,$random_sort=false) {
 
 
 //===== DATEN AUS RSS_FEEDS ====================================
-function wptic_get_rssdata($no_posts, $urls, $maxchar,$template,$random_sort=false) {
+function wptic_get_rssdata($no_posts, $urls, $maxchar,$template,$random_sort=false, $ticker_id) {
   global $more_tag;
 
   $url_array = explode("\r\n",$urls);
@@ -121,9 +125,9 @@ function wptic_get_rssdata($no_posts, $urls, $maxchar,$template,$random_sort=fal
 
     foreach($item_array as $items) {
       if($k==0)
-        $anfang = '<div>';
+        $anfang = '<div class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
       else
-        $anfang = '<div style="display:none;">';
+        $anfang = '<div style="display:none;" class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
 
       $link = trim($items[1]);
       if($link=="")
@@ -167,7 +171,7 @@ function wptic_get_rssdata($no_posts, $urls, $maxchar,$template,$random_sort=fal
 
 
 //===== DATEN AUS DB ============================================
-function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sort=false) {
+function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sort="wposts.post_date DESC", $ticker_id) {
   global $wpdb,$more_tag;
 
   if(trim($no_posts)!="")
@@ -182,10 +186,10 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sor
   $k=0;
   foreach($catid_arr as $catid) {
 
-    if($random_sort)
-      $sort_zusatz = "RAND()";
-    else
+    if(trim($random_sort)=="")
       $sort_zusatz = "wposts.post_date DESC";
+    else
+      $sort_zusatz = $random_sort;
 
     $request = "SELECT DISTINCT wposts.* FROM $wpdb->posts wposts LEFT JOIN $wpdb->postmeta wpostmeta ON wposts.ID = wpostmeta.post_id LEFT JOIN $wpdb->term_relationships ON (wposts.ID = $wpdb->term_relationships.object_id) LEFT JOIN $wpdb->term_taxonomy ON ($wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id) WHERE $wpdb->term_taxonomy.taxonomy = 'category' AND $wpdb->term_taxonomy.term_id ='$catid' AND wposts.post_status='publish' AND wposts.post_type='post' ORDER BY ".$sort_zusatz.$limit;
     $posts = $wpdb->get_results($request);
@@ -205,9 +209,9 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sor
         $post_content = str_replace("<-ticend->", '<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">'.$more_tag.'</a>',$post_content);
 
         if($k==0)
-          $anfang = '<div>';
+          $anfang = '<div class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
         else
-          $anfang = '<div style="display:none;">';
+          $anfang = '<div style="display:none;" class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
 
         $template_stack = str_replace("%tic_title%",'<a href="' . $permalink . '" rel="bookmark" title="Permanent Link: ' . htmlspecialchars($post_title, ENT_COMPAT) . '">' . $post_title . '</a>',$template);
         $template_stack = str_replace("%tic_content%",$post_content,$template_stack);
@@ -221,15 +225,109 @@ function wptic_get_dbdata($no_posts, $catids = 1, $maxchar,$template,$random_sor
     }
     else {
       if($k==0)
-        $anfang = '<div>';
+        $anfang = '<div class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
       else
-        $anfang = '<div style="display:none;">';
+        $anfang = '<div style="display:none;" class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
       $output .= $anfang.'NO POST FOR CAT-ID '. $catid.'</div>';
       $k++;
     }
   }
+
+
   return $output;
 }
+
+
+//===== DATEN AUS KOMMENTAREN ================================
+function wptic_get_coments($no_posts, $maxchar,$random_sort='comments.comment_date DESC', $ticker_id) {
+  global $wpdb,$date_format,$time_format,$template,$avatar_size;
+
+  $output = "";
+
+  if(trim($no_posts)!="")
+    $limit = " LIMIT $no_posts";
+  else
+    $limit = "";
+
+  if(trim($random_sort)=="") {
+    $sort_zusatz = "$wpdb->comments.comment_date DESC";
+  }
+  else if($random_sort=="RAND()") {
+    $sort_zusatz = "RAND()";
+  }
+  else
+    $sort_zusatz = "{$wpdb->prefix}".$random_sort;
+
+  $comments_query="SELECT $wpdb->comments.comment_author, $wpdb->comments.comment_author_url,$wpdb->comments.comment_author_email,$wpdb->comments.comment_date,$wpdb->comments.comment_content,$wpdb->posts.post_title,$wpdb->posts.guid FROM $wpdb->comments,$wpdb->posts
+                         WHERE $wpdb->comments.comment_post_ID=$wpdb->posts.ID
+                         AND $wpdb->comments.comment_approved='1'
+                         AND $wpdb->comments.comment_author_url NOT LIKE '".get_bloginfo( 'url', 'raw' )."%'
+                         AND comment_author !=''
+                         AND $wpdb->comments.comment_type NOT LIKE 'pingback' OR 'trackback'
+                         ORDER BY ".$sort_zusatz.$limit;
+
+
+  $comments_result = $wpdb->get_results($comments_query);
+
+  $k=0;
+  foreach ($comments_result as $comment) {
+
+    $kontent = "";
+    $c_autor = $comment->comment_author;
+    $c_autorurl = $comment->comment_author_url;
+    $c_autormail = $comment->comment_author_email;
+    $c_date_time = $comment->comment_date;
+    $c_content = $comment->comment_content;
+    $c_post = $comment->post_title;
+    $c_posturl = $comment->guid;
+
+    $c_date_time = explode(" ",$c_date_time);
+    $c_date = explode("-",$c_date_time[0]);
+    $c_time = explode(":",$c_date_time[1]);
+
+    $date_time_stamp = mktime($c_time[0], $c_time[1], $c_time[2], $c_date[1], $c_date[2], $c_date[0]);
+    if(isset($date_format))
+      $c_date = date($date_format,$date_time_stamp);
+    else
+      $c_date = date(get_option('date_format'),$date_time_stamp);
+    if(isset($time_format))
+      $c_time = date($time_format,$date_time_stamp);
+    else
+      $c_time = date(get_option('time_format'),$date_time_stamp);
+
+    if($maxchar>0 && $maxchar!="") {
+      $c_content = wptic_shrink_data($c_content,$maxchar);
+      $c_content = str_replace("<-ticend->"," ...",$c_content);
+    }
+
+    if(trim($avatar_size)=="" || !is_numeric($avatar_size))
+      $avatar_size = 60;
+    $kom_avatar = get_avatar($c_autormail,$avatar_size);
+
+    $kontent = $template;
+    $kontent = str_replace("%author%",$c_autor,$kontent);
+    $kontent = str_replace("%author_url%",$c_autorurl,$kontent);
+    $kontent = str_replace("%avatar%",$kom_avatar,$kontent);
+    $kontent = str_replace("%date%",$c_date,$kontent);
+    $kontent = str_replace("%time%",$c_time,$kontent);
+    $kontent = str_replace("%content%",$c_content,$kontent);
+    $kontent = str_replace("%post%",$c_post,$kontent);
+    $kontent = str_replace("%post_url%",$c_posturl,$kontent);
+
+    if($k==0)
+      $anfang = '<div class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
+    else
+      $anfang = '<div style="display:none;" class="ticker_item" id="ticker_item_'.$ticker_id.'_'.($k+1).'">';
+
+    $output .= $anfang.$kontent."</div>";
+
+    $k++;
+
+  }
+
+  return $output;
+}
+
 
 
 //===== DATEN KÜRZEN ================================
