@@ -89,7 +89,6 @@
   $hinweis_w = "Notes";
   $fuﬂnote_w = "For new script modules and updates just visite <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a>. Or follow on";
   $spende_w = "I wouldn't be angry if you";
-  $spenden_button = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"><input type="hidden" name="cmd" value="_s-xclick" /><input type="hidden" name="hosted_button_id" value="5N5W7NYH7TZC6" /><input type="image" alt="Donate with Paypal" name="submit" src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" /><img alt="Pixel in WP-Ticker" src="https://www.paypalobjects.com/de_DE/i/scr/pixel.gif" width="1" height="1" border="0" /></form>';
-
+  $spenden_button = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" name="_xclick" target="_blank"><input type="hidden" name="cmd" value="_xclick" /><input type="hidden" name="business" value="info@stegasoft.de" /><input type="hidden" name="currency_code" value="EUR" /><input type="hidden" name="item_name" value="WP-Ticker" /><input type="hidden" name="amount" value="" /><input type="hidden" name="return" value="http://wp-ticker.stegasoft.de/danke/" /><input type="hidden" name="notify_url" value="http://www.stegasoft.de/php/paypal/ipn.php" /><input type="image" alt="Donate with Paypal" name="submit" src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" /></form>';
 
 ?>

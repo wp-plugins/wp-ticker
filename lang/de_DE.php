@@ -90,6 +90,5 @@
   $hinweis_w = "Hinweise";
   $fuﬂnote_w = "Neue Ticker-Module und Updates werden unter <a href='http://www.stegasoft.de/' target='_blank'>www.stegasoft.de</a> ver&ouml;ffentlicht. Oder folge auf";
   $spende_w = "Ich freue mich immer &uuml;ber";
-  $spenden_button = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank"><input type="hidden" name="cmd" value="_s-xclick" /><input type="hidden" name="hosted_button_id" value="ZQ3UV6DUTT56S" /><input type="image" alt="Spende per Paypal" name="submit" src="https://www.paypal.com/de_DE/DE/i/btn/btn_donate_SM.gif" /><img alt="Pixel in WP-Ticker" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" border="0" /></form>';
-
+  $spenden_button = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" name="_xclick" target="_blank"><input type="hidden" name="cmd" value="_xclick" /><input type="hidden" name="business" value="info@stegasoft.de" /><input type="hidden" name="currency_code" value="EUR" /><input type="hidden" name="item_name" value="WP-Ticker" /><input type="hidden" name="amount" value="" /><input type="hidden" name="return" value="http://wp-ticker.stegasoft.de/danke/" /><input type="hidden" name="notify_url" value="http://www.stegasoft.de/php/paypal/ipn.php" /><input type="image" alt="Jetzt einfach, schnell und sicher online bezahlen ñ mit PayPal." name="submit" src="https://www.paypal.com/de_DE/DE/i/btn/btn_donate_SM.gif" /></form>';
 ?>

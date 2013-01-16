@@ -10,8 +10,6 @@ Min WP Version: 3.3
 */
 
 
-$akt_ticker_id = $_SESSION['wp_ticker_id'];
-
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
 $wpticversion = "1.3";
