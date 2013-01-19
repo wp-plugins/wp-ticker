@@ -1,18 +1,20 @@
 <?php
 /*
 Plugin Name: WP-Ticker
-Plugin URI: http://wp-ticker.stegasoft.de
-Description: Modularer, Multisite f&auml;higer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
-Version: 1.3
+Plugin URI: http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/
+Description: Modularer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
+Version: 1.3.1
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
 */
 
 
+$akt_ticker_id = $_SESSION['wp_ticker_id'];
+
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.3";
+$wpticversion = "1.3.1";
 
 
 
@@ -22,6 +24,15 @@ $wpticversion = "1.3";
 
 define('WPTIC_URLPATH', WP_CONTENT_URL.'/plugins/'.plugin_basename( dirname(__FILE__)) );
 $wptic_plugin_dir = WPTIC_URLPATH;
+
+
+if ( !defined('WP_CONTENT_DIR') )
+  define('WP_CONTENT_DIR', ABSPATH . 'wp-content');
+
+define('MODULE_PATH',WP_CONTENT_DIR . "/plugins/".dirname(plugin_basename(__FILE__)));
+
+
+
 
 @include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR ."tic-global.php");
 
@@ -395,7 +406,8 @@ function wptic_options_page() {
 
 
   //+++++ MODULE AUSLESEN +++++++++++
-  $verzeichnis = dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR."wp-content/plugins/wp-ticker/modules/";
+  //$verzeichnis = dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR."wp-content/plugins/wp-ticker/modules/";
+  $verzeichnis = MODULE_PATH . "/modules/";
   $modules = "";
   $js_script = "var ticker_hints = new Array();\n".
                "ticker_hints[0] = new Object;\n";
