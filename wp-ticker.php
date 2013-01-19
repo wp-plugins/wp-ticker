@@ -196,7 +196,7 @@ function show_wpticker($id) {
           'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
   if(is_numeric($interval_time) && $interval_time>0) {
     $code .= 'setInterval ( function () {'.
-          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>'.decode_tcpr_wp($aus).'\');';
+          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>\');';
     if(is_numeric($pause_time) && $pause_time>0)
        $code .= 'setTimeout(\'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});\','.$pause_time.');';
     else
@@ -252,7 +252,7 @@ function wptic_get_params($atts) {
           'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});';
   if(is_numeric($interval_time) && $interval_time>0) {
     $code .= 'setInterval ( function () {'.
-          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>'.decode_tcpr_wp($aus).'\');';
+          'jQuery("#wptic_code_'.$id.'").html(\'<div class="ticker_content" id="ticker_content_'.$id.'">'.$loader.'<\/div>\');';
     if(is_numeric($pause_time) && $pause_time>0)
        $code .= 'setTimeout(\'jQuery.post("'.$wptic_plugin_dir.'/get_ticker_code.php",{ ticker_id: '.$id.'}, function(data) {jQuery("#wptic_code_'.$id.'").html(data);});\','.$pause_time.');';
     else
@@ -297,15 +297,6 @@ function wptic_sctictext($atts) {
   return $output;
 }
 add_shortcode('wptictext', 'wptic_sctictext');
-
-
-function decode_tcpr_wp($do=flase) {
-  if($do)
-    $out = "";
-  else
-    $out = base64_decode("PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo4cHQ7Ij5XUC1UaWNrZXIgcG93ZXJlZCBieSA8YSBocmVmPSJodHRwOi8vd3d3LnN0ZWdhc29mdC5kZSIgdGFyZ2V0PSJfYmxhbmsiPlN0ZUdhU29mdDwvYT48L3NwYW4+");
-  return $out;
-}
 
 
 
