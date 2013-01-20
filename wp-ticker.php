@@ -496,7 +496,7 @@ function wptic_options_page() {
     $off="aus";
   else
     $off="an";
-  echo "<h2>" . __( "WP-Ticker $wpticversion Administration", "wptic_trans_domain" ) ."<script type='text/javascript' src='http://www.stegasoft.de/php/wp-ticker-news.php?lang=$lang&amp;v=$wpticversion&amp;a=$off'></script></h2>";
+  echo "<h2>" . __( "WP-Ticker $wpticversion Administration", "wptic_trans_domain" ) ."</h2>";
 
   // options form
 
