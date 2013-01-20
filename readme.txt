@@ -55,6 +55,9 @@ FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 
 
 == Changelog ==
+= Version 1.3.2 (20.01.2013) =
+* kleine interne Änderung
+
 = Version 1.3.1 (19.01.2013) =
 * Bugfix bei Aenderung des Verzeichnisnamens von wp-content
 
