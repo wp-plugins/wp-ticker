@@ -1,5 +1,5 @@
 === WP-Ticker ===
-Contributors: Stephan Gaertner
+Contributors: sgt, Stephan Gaertner
 Donate link: http://wp-ticker.stegasoft.de
 Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
