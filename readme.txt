@@ -55,6 +55,9 @@ FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 
 
 == Changelog ==
+= Version 1.3.2.1 (03.05.2013) =
+* kleine interne Änderung
+
 = Version 1.3.2 (20.01.2013) =
 * kleine interne Änderung
 

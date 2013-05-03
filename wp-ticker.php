@@ -3,7 +3,7 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/
 Description: Modularer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
-Version: 1.3.2
+Version: 1.3.2.1
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
@@ -14,7 +14,7 @@ $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.3.2";
+$wpticversion = "1.3.2.1";
 
 
 
@@ -91,7 +91,14 @@ add_action('wp_head', 'wpticjs2head');
 
 function wptic_init() {
   wp_enqueue_script( 'jquery' );
-  if(!session_id())
+  
+  require_once ('wp_autoupdate.php');
+  $wptuts_plugin_current_version = $wpticversion;
+  $wptuts_plugin_remote_path = 'http://wp-ticker.stegasoft.de/wp-autoupdate/wpticker-update.php';
+  $wptuts_plugin_slug = plugin_basename(__FILE__);
+  new wp_auto_update ($wptuts_plugin_current_version, $wptuts_plugin_remote_path, $wptuts_plugin_slug);
+  
+  f(!session_id())
     session_start();
 
 
