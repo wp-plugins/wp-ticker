@@ -98,7 +98,7 @@ function wptic_init() {
   $wptuts_plugin_slug = plugin_basename(__FILE__);
   new wp_auto_update ($wptuts_plugin_current_version, $wptuts_plugin_remote_path, $wptuts_plugin_slug);
   
-  f(!session_id())
+  if(!session_id())
     session_start();
 
 
