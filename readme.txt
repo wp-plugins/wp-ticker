@@ -4,7 +4,7 @@ Donate link: http://wp-ticker.stegasoft.de
 Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
 Tested up to: 3.5
-Stable tag: 1.3.1
+Stable tag: 1.3.2.2
 
 
 Auf jQuery basierender, Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann.
@@ -55,6 +55,9 @@ FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 
 
 == Changelog ==
+= Version 1.3.2.2 (04.05.2013) =
+* Bugfix (Error in Zeile 102)
+
 = Version 1.3.2.1 (03.05.2013) =
 * kleine interne Änderung
 
