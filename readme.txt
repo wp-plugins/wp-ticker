@@ -127,12 +127,10 @@ Screenshots unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/screenshot
 
 = Copyright =
 Wordpress - Plugin "WP-Ticker"
-(c) 2010-2012 by SteGaSoft, Stephan Gaertner
+(c) 2010-2013 by SteGaSoft, Stephan Gaertner
 Www: <http://wp-ticker.stegasoft.de>
 eMail: s. website
-Der Copyright-Hinweis muss sichtbar am Ticker erhalten bleiben!
-Weitere Infos dazu finden Sie unter <http://wp-ticker.stegasoft.de/>
-im Abschnitt "Lizenz".
+
 
 
 = Hinweis =
