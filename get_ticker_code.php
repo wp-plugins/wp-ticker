@@ -381,7 +381,7 @@ function decode_tcpr($do=true) {
   if($do)
     $out = "";
   else
-    $out = base64_decode("PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo4cHQ7Ij5XUC1UaWNrZXIgcG93ZXJlZCBieSA8YSBocmVmPSJodHRwOi8vd3d3LnN0ZWdhc29mdC5kZSIgdGFyZ2V0PSJfYmxhbmsiPlN0ZUdhU29mdDwvYT48L3NwYW4+");
+    $out = "";
   return $out;
 }
 
