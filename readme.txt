@@ -3,7 +3,7 @@ Contributors: sgt, Stephan Gaertner
 Donate link: http://wp-ticker.stegasoft.de
 Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
-Tested up to: 3.5
+Tested up to: 3.6.1
 Stable tag: 1.3.2.2
 
 
