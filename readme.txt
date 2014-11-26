@@ -3,7 +3,7 @@ Contributors: sgt, Stephan Gaertner
 Donate link: http://wp-ticker.stegasoft.de
 Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
-Tested up to: 4.0
+Tested up to: 4.0.1
 Stable tag: 1.3.2.3
 
 
@@ -22,12 +22,18 @@ D. h. es ist kein Reload der Seite notwendig, um Aktualisierungen zu sehen.
 Mit WP-Ticker koennen auch (die meisten) ATOM-Feeds geparst werden.
 
 = Funktionen: =
-* Datenquelle: Datenbank, eigener Text, RSS oder Kommentare. Bei Datenbank als Quelle kann der Kontent ueber die Auswahl der entspr. Kategorie(n) bestimmt werden.
+* Datenquelle: Datenbank, eigener Text, RSS, Kommentare. Bei Datenbank als Quelle kann der Kontent ueber die Auswahl der entspr. Kategorie(n) bestimmt werden.
 * Aussehen kann per CSS angepasst werden (global und/oder individuell fuer alle Ticker).
 * Ein angelegter Ticker kann einfach per Widget in eine Sidebar eingebunden werden.
 * Angabe von Start- / Enddatum fuer Anzeigezeitraum bei eigenem Text moeglich (inkl. autom. Loeschfunktion).
 * Live-Ticker-Einsatz durch Angabe eines Reload-Intervalls moeglich.
 * Sortierung (inkl. Zufall) des Kontents individuell fuer jeden Ticker moeglich
+
+= Funktionen in Version 1.6.1 (s.[WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/) ) : =
+* zusaetzliche Datenquellen: WP-Galerie, Key-/Tag- Custom-Field - Suche 
+* Basis-Layout ueber WYSIWYG-CSS-Generator einstellbar
+* Einfaches Einbinden eines Tickers in Beitrag oder Seite ueber extra Button in TinyMCE
+
 
 == Installation ==
 Entpacken Sie die ZIP-Datei und laden Sie den Ordner wp-ticker in das
@@ -55,17 +61,58 @@ FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 
 
 == Changelog ==
+= Version 1.6.1 (11/2014) =
+* Kleiner Bugfix bei der Darstellung von eigenen Texten im Backend
+
+= Version 1.6 (11/2014) =
+* Uebersetzung fuer Monats- und Tages-Namen (Datum) bei RSS-Feeds
+* Bug bei Image-Gallery behoben
+* interne Aenderungen
+* Session-Start nur bei $use_session=true
+* IE 11 - Erkennung, CSS-Generator fuer IE engepasst
+* Beitraege/Post ueber Tags-/Key-Wort oder Custom Fields - Suche
+* neu im  CSS-Generator: font-size, line-height
+
+
+= Version 1.5 (02/2014) =
+* Ticker kann einfach ueber DropDown-Liste in TinyMCE (WP-Ticker - Button) in Beitrag oder Seite eingebaut werden
+* Automatisches Duplizieren bei nur einem vorhanden Eintrag verhindert Anzeige-Problem z. B. bei Tendless
+* sind keine Inhalte vorhanden, wird Ticker automatisch ausgeblendet
+* "tic-global-custom.php" kann von Benutzer erstellt werden, um eigene Einstellungen vor Update zu sichern (Variablen entspr. aus tic-global.php uebernehmen)
+* zeitlich abgelaufene Eintraege aus "eigener Text" werden farblich unterlegt; Farbe ueber tic-global.php bzw. tic-global-custom.php -> "$bg_red" anpassbar
+* Start und Ende bei eigenem Text um Uhrzeit erweitert
+* Ablaufdatum auch fuer Texte aus Kategorien einstellbar, dazu Benutzerdefinierte Felder nutzen:
+  * Name: wpticker_enddate , Wert: Y-m-d (Beispiel 2014-01-31 fuer 31. Januar 2014); dieses Feld muss mindestens gefuellt werden, um Funktion zu aktivieren
+  * Name: wpticker_endtime,  Wert: H:i (Beispiel 13:30), dieses Feld ist optional (Standard 00:00)
+* Text-Kuerzung im Backend fuer eigenen Text ueberarbeitet, HTML-Tags werden nun richtig behandelt
+* style-global.css neu eingefuehrt, style.css mit benutzerspezifischen Angaben sollte bei zukuenftigen Updates nicht mehr ueberschrieben werden
+* Bugfix: Button-Problem [<=Heute] unter Safari
+* Bugfix: interner Klassen-Name angepasst
+
+= Version 1.4 (02.05.2013) =
+* Titel ueber ID und/oder Klasse per CSS editieren
+   * .ticker_head bzw. #ticker_head_TICKERID => RSS-Quelle (Ueberschrift)
+   * .ticker_item_head bzw. #ticker_item_head_TICKERID_ITEMNUMBER => Ueberschriften der einzelnen Tickerbeitraege
+   * .ticker_more => Link zu "...weiter"
+* Shortcode auch in (Text-) Widgets nutzbar (ueber Backend aktivierbar)
+* Images aus WordPress-Gallery als Datenquelle anzeigen
+* WYSIWYG CSS-Generator
+* interne Fixes
+
+= +++++ die neueste Version finden Sie auf [wp-ticker.stegasoft.de](http://wp-ticker.stegasoft.de/) +++++ =
+
+
 = Version 1.3.2.3 (18.12.2013) =
-* spanische Übersetzung
+* spanische Uebersetzung
 
 = Version 1.3.2.2 (04.05.2013) =
 * Bugfix (Error in Zeile 102)
 
 = Version 1.3.2.1 (03.05.2013) =
-* kleine interne Änderung
+* kleine interne Aenderung
 
 = Version 1.3.2 (20.01.2013) =
-* kleine interne Änderung
+* kleine interne Aenderung
 
 = Version 1.3.1 (19.01.2013) =
 * Bugfix bei Aenderung des Verzeichnisnamens von wp-content
@@ -195,7 +242,7 @@ Somit koennen Sie den Ticker besser identifizieren.
 
 
 Start-Datum und End-Datum geben an, ab bzw. bis wann der eigene Text angezeigt werden soll.
-Ist "auto. Loeschen" ausgewählt, werden die eigenen Text automatisch unwiderruflich geloescht.
+Ist "auto. Loeschen" ausgewaehlt, werden die eigenen Text automatisch unwiderruflich geloescht.
 
 
 = Ticker einbinden =
