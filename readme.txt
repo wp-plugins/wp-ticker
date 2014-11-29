@@ -29,9 +29,9 @@ Mit WP-Ticker koennen auch (die meisten) ATOM-Feeds geparst werden.
 * Live-Ticker-Einsatz durch Angabe eines Reload-Intervalls moeglich.
 * Sortierung (inkl. Zufall) des Kontents individuell fuer jeden Ticker moeglich
 
-= Funktionen in Version 1.6.1 (s.[WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/) ) : =
+= Funktionen in Version 1.6.1 (siehe wp-ticker.stegasoft.de) : =
 * zusaetzliche Datenquellen: WP-Galerie, Key-/Tag- Custom-Field - Suche 
-* Basis-Layout ueber WYSIWYG-CSS-Generator einstellbar
+* Basis-Layout ueber WYSIWYG-CSS-Generator einstellbar ( s. [WP-Ticker Beispiele](http://wp-ticker.stegasoft.de/beispiele/) )
 * Einfaches Einbinden eines Tickers in Beitrag oder Seite ueber extra Button in TinyMCE
 
 
@@ -99,8 +99,7 @@ FAQ unter [WP-Ticker SteGaSoft](http://wp-ticker.stegasoft.de/faq/)
 * WYSIWYG CSS-Generator
 * interne Fixes
 
-= +++++ die neueste Version finden Sie auf [wp-ticker.stegasoft.de](http://wp-ticker.stegasoft.de/) +++++ =
-
++++++ die neueste Version finden Sie auf [WP-Ticker.SteGaSoft.de](http://wp-ticker.stegasoft.de/downloads/) +++++
 
 = Version 1.3.2.3 (18.12.2013) =
 * spanische Uebersetzung
