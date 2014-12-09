@@ -7,7 +7,7 @@ Tested up to: 4.0.1
 Stable tag: 1.3.2.3
 
 
-Auf jQuery basierender, Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann.
+Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann. Datenquellen: z. B. Datenbank (Posts), eigener Text, RSS, Kommentare 
 
 == Description ==
 
