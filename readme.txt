@@ -3,11 +3,11 @@ Contributors: sgt, Stephan Gaertner
 Donate link: http://wp-ticker.stegasoft.de
 Tags: news,ticker,newsticker,textticker,live ticker,text,fader,scroller,rss,atom,comments,multisite
 Requires at least: 3.3
-Tested up to: 4.0.1
+Tested up to: 4.2.4
 Stable tag: 1.3.2.3
 
 
-Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann. Datenquellen: z. B. Datenbank (Posts), eigener Text, RSS, Kommentare 
+Multisite kompatibler (Live-) Ticker, der mit verschiedenen Text-Effekten ausgestattet werden kann. Datenquellen: z. B. Datenbank, eigener Text, RSS, Kommentare 
 
 == Description ==
 
