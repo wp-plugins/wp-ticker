@@ -3,18 +3,19 @@
 Plugin Name: WP-Ticker
 Plugin URI: http://www.stegasoft.de/index.php/wordpress-plugins/wp-ticker/
 Description: Modularer (Live-) News Ticker auf jQuery-Basis f&uuml;r WordPress ab Version 3.3
-Version: 1.3.2.3
+Version: 1.3.2.4
 Author: Stephan G&auml;rtner
 Author URI: http://www.stegasoft.de
 Min WP Version: 3.3
 */
 
+//Datenbank fuer zukuenftige Versionen angepasst
 
 $akt_ticker_id = $_SESSION['wp_ticker_id'];
 
 $table_style = "border:solid 1px #606060;border-collapse:collapse;padding:2px;";
 
-$wpticversion = "1.3.2.3";
+$wpticversion = "1.3.2.4";
 
 
 
@@ -123,9 +124,8 @@ function wptic_install() {
   include_once (ABSPATH."/wp-admin/upgrade-functions.php");
   @maybe_create_table($wpdb->prefix . "wp_ticker", $install_query);
 
-  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker_content (ID bigint(20) unsigned NOT NULL auto_increment, Ticker_ID INT NOT NULL, Daten text NOT NULL, Zeige_Start DATE NOT NULL, Zeige_Ende DATE NOT NULL, Auto_Delete varchar(2) NOT NULL, Erstell_Stamp bigint(20) NOT NULL, PRIMARY KEY (ID), INDEX ( Ticker_ID ))";
+  $install_query = "CREATE TABLE " . $wpdb->prefix ."wp_ticker_content (ID bigint(20) unsigned NOT NULL auto_increment, Ticker_ID INT NOT NULL, Daten text NOT NULL, Zeige_Start varchar(10) NOT NULL DEFAULT '0000-00-00', Zeige_Startzeit varchar(10) NOT NULL DEFAULT '00:00', Zeige_Ende varchar(10) NOT NULL DEFAULT '0000-00-00', Zeige_Endezeit varchar(10) NOT NULL DEFAULT '00:00', Auto_Delete varchar(2) NOT NULL, Erstell_Stamp bigint(20) NOT NULL, PRIMARY KEY (ID), INDEX ( Ticker_ID ))";
   @maybe_create_table($wpdb->prefix . "wp_ticker_content", $install_query);
-
 }
 
 
